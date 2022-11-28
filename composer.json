@@ -1,0 +1,29 @@
+{
+    "name": "vantran/php-nham-date",
+    "description": "PHP Date & Time for Luc Nham CMS",
+    "type": "library",
+    "require": {
+        "solaris/php-moon-phase": "^2.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "spatie/phpunit-watcher": "^1.23"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Vantran\\PhpNhamDate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vantran\\PhpNhamDate\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Văn Trần",
+            "email": "CaoVan.Info@gmail.com"
+        }
+    ]
+}
