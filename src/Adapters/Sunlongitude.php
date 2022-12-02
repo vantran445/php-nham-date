@@ -3,6 +3,7 @@
 namespace Vantran\PhpNhamDate\Adapters;
 
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 
 class Sunlongitude
@@ -54,7 +55,7 @@ class Sunlongitude
         return new Sunlongitude($jdn, $timezone);
     }
 
-    public static function createFromDate(DateTime $date): Sunlongitude
+    public static function createFromDate(DateTimeInterface $date): Sunlongitude
     {
         return Sunlongitude::createFromDates(
             $date->format('Y'),
