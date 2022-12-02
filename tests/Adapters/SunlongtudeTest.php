@@ -16,33 +16,6 @@ use Vantran\PhpNhamDate\Adapters\Sunlongitude;
  */
 class SunlongtudeTest extends TestCase
 {
-
-    /**
-     * Kiểm tra KDMT thời điểm viết test và trả về đối tượng cho một số phụ thuộc
-     *
-     * @covers Sunlongitude
-     * @return Sunlongitude
-     */
-    public function testInstance(): Sunlongitude
-    {
-        /**
-         * Thời gian test được viết tại Đăk Nông ngày 01 tháng 12 năm 2022, lúc
-         * 10 giờ 10 phút (đêm) - GMT+7
-         * 
-         * KDMT đối chiếu: 249.40392880463 (clearskytonight.com)
-         * KDMT tính toán được: 249.40098961882
-         */
-        $compareSl = 249.40392880463;
-        $timezone = new DateTimeZone('+0700');
-        $date = new DateTime('2022-12-01 22:10:00', $timezone);
-        $sl = Sunlongitude::createFromDate($date);
-
-        $this->assertEquals(249, $sl->getDegree(false));
-        $this->assertLessThan(0.01, abs($compareSl - $sl->getDegree()));
-        
-        return $sl;
-    }
-
     /**
      * Kiểm tra 1 tập hợp kết quả trong năm 2022, với mức sai số 0.01 phút.
      *
