@@ -1,15 +1,25 @@
-<?php
-
-namespace Vantran\PhpNhamDate\Adapters;
+<?php namespace Vantran\PhpNhamDate\Adapters;
 
 use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
 
+/**
+ * Lớp tính toán Kinh độ Mặt trời tại một thời điểm và vị trí.
+ * 
+ * @since 1.0.0
+ * @author Văn Trần <caovan.info@gmail.com>
+ */
 class Sunlongitude
 {
     protected float $sl;
 
+    /**
+     * Tạo mới đối tượng
+     *
+     * @param float $jdn
+     * @param float $timezone
+     */
     public function __construct(
         protected float $jdn,
         protected float $timezone = 0.0 // UTC
@@ -18,7 +28,13 @@ class Sunlongitude
         $this->sl = $this->convert($this->jdn, $this->timezone);
     }
 
-    public function __set($name, $value)
+    /**
+     * Cho phép điều chỉnh linh động một số thuộc tính
+     *
+     * @param string $name
+     * @param mixed $value
+     */
+    public function __set(string $name, mixed $value)
     {
         if ($name === 'sl' || $name === 'jdn') {
             $this->{$name} = floatval($value);
@@ -42,6 +58,18 @@ class Sunlongitude
         return $L =  $lambda - 360 * (floor($lambda / (360))); // Normalize to (0, 360)
     }
 
+    /**
+     * Tạo đối tượng từ nhóm các thông số ngày tháng
+     *
+     * @param integer $Y
+     * @param integer $m
+     * @param integer $d
+     * @param integer $H
+     * @param integer $i
+     * @param integer $s
+     * @param integer $timezone
+     * @return Sunlongitude
+     */
     public static function createFromDates(
         int $Y, 
         int $m, 
@@ -55,6 +83,12 @@ class Sunlongitude
         return new Sunlongitude($jdn, $timezone);
     }
 
+    /**
+     * Tạo đối tượng từ một đối tượng có triển khai DateTimeInterface
+     *
+     * @param DateTimeInterface $date
+     * @return Sunlongitude
+     */
     public static function createFromDate(DateTimeInterface $date): Sunlongitude
     {
         return Sunlongitude::createFromDates(
@@ -68,7 +102,17 @@ class Sunlongitude
         );
     }
 
-    protected function matchJdBegin(&$jdn, &$sl, $timezone, $withHour = false, $withMinutes = false)
+    /**
+     * Tìm số ngày Jdn là điểm bắt đầu của một góc KDMT, mỗi góc tương ứng 15 độ
+     *
+     * @param float $jdn
+     * @param float $sl
+     * @param float $timezone
+     * @param boolean $withHour
+     * @param boolean $withMinutes
+     * @return void
+     */
+    protected function matchJdBegin(float &$jdn, float &$sl, float $timezone, bool $withHour = false, bool $withMinutes = false)
     {
         $breakPoint = $sl < 15
             ? 0
@@ -102,6 +146,14 @@ class Sunlongitude
         }
     }
 
+    /**
+     * Trả về đối tượng với là điểm khởi đầu của một điểm KDMT.
+     *
+     * @param boolean $withHour Có bao gồm giờ hay không, mặc định không
+     * @param boolean $withMinutes Có bao gồm phút hay không, mặc định không.
+     * 
+     * @return Sunlongitude
+     */
     public function getStartingPoint($withHour = false, $withMinutes = false)
     {
         $jdn = $this->jdn;
@@ -115,33 +167,43 @@ class Sunlongitude
         return $ins;
     }
 
-    // public function getNext(int $point = 1): Sunlongitude 
-    // {
-    //     $breakPoint = floor($this->jdn - $this->jdn % 15) + ($point * 15 % 360);
-    //     $jdn = $point * 15 + $this->jdn;
-    //     $sl = $this->convert($jdn, $this->timezone);
-    // }
-
-    // public function getPrev(int $point = 1): Sunlongitude 
-    // {
-
-    // }
-
+    /**
+     * Trả về giá trị KDMT tìm được
+     *
+     * @param boolean $withMinutes Có bao gồm phần lẻ thập phân trong kết quả 
+     * không, nếu chọn không, giá trị sẽ được làm tròn.
+     * @return float
+     */
     public function getDegree($withMinutes = true): float
     {
         return $withMinutes? $this->sl : floor($this->sl);
     }
     
+    /**
+     * Lấy phần lẻ thập phân của giá trị KDMT tại thời điểm
+     *
+     * @return integer
+     */
     public function getMinutes(): int
     {
         return $this->getDegree() - $this->getDegree(false);
     }
 
+    /**
+     * Chuyển đổi thời điểm KDMT về mốc tem thời gian UNIX
+     *
+     * @return integer
+     */
     public function toTimestamp(): int
     {
         return ($this->jdn - 2440587.5 - 0.5 - $this->timezone / 24) * 86400;
     }
 
+    /**
+     * Chuyển đổi thời điểm KDMT thành đối tượng DateTime
+     *
+     * @return DateTime
+     */
     public function toDate(): DateTime
     {
         $sign = $this->timezone < 0? '-' : '+';
@@ -151,6 +213,11 @@ class Sunlongitude
         return $date->setTimestamp($this->toTimestamp());
     }
 
+    /**
+     * Trả về số ngày Julian tương ứng với KDMT
+     *
+     * @return float
+     */
     public function getJdn(): float
     {
         return $this->jdn;
