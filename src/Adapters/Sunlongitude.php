@@ -12,6 +12,9 @@ use DateTimeZone;
  */
 class Sunlongitude
 {
+    const JD_EACH_HOUR = 0.041666666666667;
+    const JD_EACH_MINUTE = 0.0006944444444444444;
+
     protected float $sl;
 
     /**
@@ -103,47 +106,30 @@ class Sunlongitude
     }
 
     /**
-     * Tìm số ngày Jdn là điểm bắt đầu của một góc KDMT, mỗi góc tương ứng 15 độ
+     * Hợp lệ hóa số đo độ
      *
-     * @param float $jdn
-     * @param float $sl
-     * @param float $timezone
-     * @param boolean $withHour
-     * @param boolean $withMinutes
-     * @return void
+     * @param integer|float|callable $degree
+     * @return int|float
      */
-    protected function matchJdBegin(float &$jdn, float &$sl, float $timezone, bool $withHour = false, bool $withMinutes = false)
+    protected function legitimizeDegee(int|float|callable $degree)
     {
-        $breakPoint = $sl < 15
-            ? 0
-            : floor($sl) - $sl % 15;
+        if (is_callable($degree)) {
+            $degree = $degree();
+        }
 
-        $match = function(&$jdn, &$sl, $jdMatchUnit, $breakPoint, $timezone) {
-            while (true) {
-                $nextJd = $jdn - $jdMatchUnit;
-                $nextSl = $this->convert($nextJd, $timezone);
-
-                if (
-                    ($breakPoint === 0 && $nextSl > 359)|| 
-                    ($breakPoint > 0 && $nextSl < $breakPoint)
-                ) {
-                    break;
-                }
-
-                $sl = $nextSl;
-                $jdn = $nextJd;
-            }
-        };
-
-        $match($jdn, $sl, 1, $breakPoint, $timezone);
-
-        if ($withHour) {
-            $match($jdn, $sl, 0.041666666666667, $breakPoint, $timezone);
-
-            if ($withMinutes) {
-                $match($jdn, $sl, 0.016666666666667, $breakPoint, $timezone);
+        if ($degree < 0) {
+            while ($degree < 0) {
+                $degree += 360;
             }
         }
+
+        if ($degree >= 360) {
+            while ($degree >= 360) {
+                $degree -= 360;
+            }
+        }
+
+        return $degree;
     }
 
     /**
@@ -154,17 +140,13 @@ class Sunlongitude
      * 
      * @return Sunlongitude
      */
-    public function getStartingPoint($withHour = false, $withMinutes = false)
+    public function toStartingPoint()
     {
-        $jdn = $this->jdn;
-        $sl = $this->sl;
+        $degree = $this->legitimizeDegee(function () {
+            return $this->sl - floor($this->sl) + $this->sl % 15;
+        });
 
-        $this->matchJdBegin($jdn, $sl, $this->timezone, $withHour, $withMinutes);
-        $ins = clone($this);
-        $ins->jdn = $jdn;
-        $ins->sl = $sl;
-
-        return $ins;
+        return $this->toPrevious($degree);
     }
 
     /**
@@ -221,5 +203,175 @@ class Sunlongitude
     public function getJdn(): float
     {
         return $this->jdn;
+    }
+
+    /**
+     * Khớp số ngày Julian và số đo KDMT về một góc trước đó (tìm lùi về)
+     *
+     * @param float $jdn Ngày Julian bắt đầu
+     * @param float $sl Số đo KDMT bắt đầu
+     * @param integer $degree Góc KDMT cần giảm
+     * @return void
+     */
+    private function matchToPrevPosition(float &$jdn, float &$sl, float $degree = 15)
+    {
+        $deg = $this->legitimizeDegee($sl - $degree + 360);
+        $jdn = $jdn - ($degree % 360) * 1.0145625;
+        $sl = $this->convert($jdn, $this->timezone);
+
+        // Đảm bảo giá trị để bắt đầu tính toán sẽ lớn hơn giá trị mong muốn
+        while (
+            $sl > 345 && $deg < 15 ||
+            $sl < $deg
+        ) {
+            $jdn ++;
+            $sl = $this->convert($jdn, $this->timezone);
+        }
+
+        if ($sl === $deg) {
+            return;
+        }
+
+        // Tìm kết quả
+        $match = function(float &$jdn, float &$sl, float $unit, float $degree) {
+            while (true) {
+                $jdNext = $jdn - $unit;
+                $slNext = $this->convert($jdNext, $this->timezone);
+
+                if (
+                    ($slNext <= $degree) ||
+                    ($slNext > 345 && $degree < 15 && $sl > 0)
+                ) {
+                    break;
+                }
+
+                $jdn = $jdNext;
+                $sl = $slNext;
+            }
+        };
+
+        $match($jdn, $sl, 1, $deg);
+        $match($jdn, $sl, self::JD_EACH_HOUR, $deg);
+        $match($jdn, $sl, self::JD_EACH_MINUTE, $deg);
+    }
+
+    /**
+     * Khớp số ngày Julian và số đo KDMT về một góc trước đó (tìm lùi về)
+     *
+     * @param float $jdn Ngày Julian bắt đầu
+     * @param float $sl Số đo KDMT bắt đầu
+     * @param integer $degree Góc KDMT cần giảm
+     * @return void
+     */
+    private function matchToNextPosition(float &$jdn, float &$sl, float $degree = 15)
+    {
+        $deg = $this->legitimizeDegee($sl + $degree);
+        $jdn = $jdn + ($degree % 360) * 1.0145625;
+        $sl = $this->convert($jdn, $this->timezone);
+
+        // Đảm bảo giá trị để bắt đầu tính toán sẽ nhỏ hơn giá trị mong muốn
+        while (
+            $sl > $deg ||
+            $deg > 345 && $sl < 15
+        ) {
+            $jdn --;
+            $sl = $this->convert($jdn, $this->timezone);
+        }
+
+        if ($sl === $deg) {
+            return;
+        }
+
+        // Tìm kết quả
+        $match = function(float &$jdn, float &$sl, float $unit, float $degree) {
+            $counter = 0;
+            while ($counter < 60) {
+                $jdNext = $jdn + $unit;
+                $slNext = $this->convert($jdNext, $this->timezone);
+
+                if (
+                    ($slNext >= $degree) ||
+                    ($degree > 345 && $slNext < 15 && $sl > 345)
+                ) {
+                    break;
+                }
+
+                $jdn = $jdNext;
+                $sl = $slNext;
+
+                $counter ++;
+            }
+        };
+
+        $match($jdn, $sl, 1, $deg);
+
+        $match($jdn, $sl, self::JD_EACH_HOUR, $deg);
+        $match($jdn, $sl, self::JD_EACH_MINUTE, $deg);
+
+        if (floor($sl) !== floor($deg)) {
+            $jdn += self::JD_EACH_MINUTE;
+            $sl = $this->convert($jdn, $this->timezone);
+        }
+    }
+
+    /**
+     * Tạo một bản sao và các thông số mới thông qua __set magic
+     *
+     * @param integer|float $jdn
+     * @param integer|float $sl
+     * @return Sunlongitude
+     */
+    private function cloneNew(int|float $jdn, int|float $sl)
+    {
+        $ins = clone($this);
+        $ins->sl = $sl;
+        $ins->jdn = $jdn;
+
+        return $ins;
+    }
+
+    /**
+     * Trả về chuỗi xác định thời gian dương lịch tương ứng với góc KDMT
+     *
+     * @param string $formater
+     * @return string
+     */
+    public function toDateTimeFormat(string $formater = 'd/m/Y H:i:s')
+    {
+        return $this->toDate()->format($formater);
+    }
+
+    /**
+     * Trả về đối tượng vị trí KDMT kế tiếp
+     * 
+     * @param integer $degree Xác định số đo góc sẽ được cộng thêm từ góc hiện
+     * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 + 15 = 29 độ.
+     * @return Sunlongitude
+     */
+    public function toNext(int|float $degree = 15) 
+    {
+        $jdn = $this->jdn;
+        $sl = $this->sl;
+
+        $this->matchToNextPosition($jdn, $sl, $degree);
+
+        return $this->cloneNew($jdn, $sl);
+    }
+
+    /**
+     * Trả về đối tượng vị trí KDMT trước đó
+     * 
+     * @param integer $degree Xác định số đo góc sẽ được trừ đi kể từ góc hiện
+     * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 - 15 = 259.
+     * @return Sunlongitude
+     */
+    public function toPrevious(int|float $degree = 15) 
+    {   
+        $jdn = $this->jdn;
+        $sl = $this->sl;
+
+        $this->matchToPrevPosition($jdn, $sl, $degree);
+
+        return $this->cloneNew($jdn, $sl);
     }
 }
