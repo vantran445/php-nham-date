@@ -18,7 +18,21 @@ use Vantran\PhpNhamDate\Adapters\Sunlongitude;
 class SunlongtudeTest extends TestCase
 {
     /**
-     * Kiểm tra 1 tập hợp kết quả trong năm 2022, với mức sai số 0.01 phút.
+     * Múi giờ mặc định
+     *
+     * @var DateTimeZone
+     */
+    protected $timezone;
+
+    public function __construct(?string $name = null, array $data = [], $dataName = '')
+    {
+        parent::__construct($name, $data, $dataName);
+        $this->timezone = new DateTimeZone('+0700');
+    }
+
+    /**
+     * Kiểm tra 1 tập hợp kết quả trong năm 2022, sai số trong phạm vi 60 phút 
+     * (1 giờ) - tương đương ~0.0166 độ.
      *
      * @dataProvider addition2022Provider
      * @covers Sunlongitude
@@ -31,12 +45,12 @@ class SunlongtudeTest extends TestCase
         $date = new DateTime("$date 00:00:00", new DateTimeZone('+0700'));
         $sl = Sunlongitude::createFromDate($date);
 
-        $this->assertLessThan(0.01, abs($slVal - $sl->getDegree(true)));
+        $this->assertLessThan(0.0166, abs($slVal - $sl->getDegree(true)));
     }
 
     /**
      * Kiểm tra 1 tập hợp kết quả 24 điểm bắt đầu KDMT trong năm 2022, sai số
-     * trong phạm vi 60 phút.
+     * trong phạm vi 60 phút (1 giờ) - tương đương ~0.0166 độ.
      *
      * @dataProvider addition2022BeginPointProvider
      * @covers Sunlongitude
@@ -44,25 +58,67 @@ class SunlongtudeTest extends TestCase
      * @param float $slVal
      * @return void
      */
-    public function test2022StartingPoints(string $dateStr)
+    public function testStartingPoints(string $dateStr, $slCompare)
     {
-        $date = new DateTimeImmutable($dateStr, new DateTimeZone('+0700'));
+        $date = new DateTimeImmutable($dateStr, $this->timezone);
         $nextDate = $date->modify('+ 1 day');
 
         $slBegin = Sunlongitude::createFromDate($nextDate)
-                    ->getStartingPoint(true, true)
-                    ->toDate();
-        
-        $diffDate = $slBegin->diff($date);
-        
-        $this->assertLessThan(1, $diffDate->y);
-        $this->assertLessThan(1, $diffDate->m);
-        $this->assertLessThan(1, $diffDate->d);
+                        ->toStartingPoint()
+                        ->getDegree();
 
-        if ($diffDate->h == 1) {
-            $this->assertEquals(0, $diffDate->i);
-        } else {
-            $this->assertLessThan(59, $diffDate->i);
+        $this->assertLessThanOrEqual(0.0166, abs($slBegin - $slCompare));
+        $this->assertEquals(floor($slCompare), floor($slBegin));
+    }
+
+    /**
+     * Kiểm tra lấy dữ liệu vị trí kinh độ kế tiếp trong năm 2022
+     *
+     * @covers Sunlongitude
+     * @return void
+     */
+    public function testNextPositions() 
+    {
+        $_2022data = $this->addition2022BeginPointProvider();
+        $slStart = Sunlongitude::createFromDate(new DateTime('2022-01-01 16:04:52', $this->timezone));
+
+        foreach ($_2022data as $data) {
+            $nextDegree = $data['sl'] - $slStart->getDegree();
+
+            if ($nextDegree < 0) {
+                $nextDegree += 360;
+            }
+
+            $slNext = $slStart->toNext($nextDegree)->getDegree();
+            $this->assertLessThanOrEqual(0.001, abs($data['sl'] - $slNext));
+        }
+    }
+
+    /**
+     * Kiểm tra lấy dữ liệu vị trí kinh độ trước trong năm 2022
+     *
+     * @covers Sunlongitude
+     * @return void
+     */
+    public function testPreviosPositions()
+    {
+        $_2022data = $this->addition2022Provider();
+        $counter = count($_2022data);
+        $slStart = Sunlongitude::createFromDate(new DateTime('2023-01-01 00:00:00', $this->timezone));
+
+        $slPrev = $slStart->toPrevious()->getDegree();
+
+        for ($i = $counter; $i > 0; $i --) {
+            $slCompare = $_2022data[$i - 1]['sl'];
+            $prevDegress = $slStart->getDegree() - $slCompare;
+
+            if ($prevDegress < 0) {
+                $prevDegress + 360;
+            }
+
+            $slPrev = $slStart->toPrevious($prevDegress);
+
+            $this->assertLessThan(0.001, abs($slPrev->getDegree() - $slCompare));
         }
     }
 
@@ -106,7 +162,10 @@ class SunlongtudeTest extends TestCase
     /**
      * Dữ liệu 24 điểm khởi đầu của các góc KDMT trong năm 2022 theo dương lịch, 
      * mỗi điễm cách nhau ~15 độ. Cũng tương ứng với điểm khởi của 24 tiết khí 
-     * trong âm lịch. Múi giờ của tập hợp dữ liệu là GMT +7 (Việt Nam)
+     * trong âm lịch. Múi giờ của tập hợp dữ liệu là GMT +7 (Việt Nam).
+     * 
+     * Lưu ý, thời gian về điểm bắt đầu của một góc KDMT có thể chênh lệnh một
+     * vài phút.
      *
      * @link https://clearskytonight.com/projects/astronomycalculator/sun/sunlongitude.html
      * @return array
@@ -121,7 +180,7 @@ class SunlongtudeTest extends TestCase
             ['date' => '2022-03-05 21:35:00', 'sl' => 345.002982423317],
             ['date' => '2022-03-20 22:30:00', 'sl' => 0.00605007937692163],
             ['date' => '2022-04-05 02:10:00', 'sl' => 15.0008672352589],
-            ['date' => '2022-04-20 09:15:00', 'sl' => 29.9989819641427],
+            ['date' => '2022-04-20 09:15:00', 'sl' => 30.0010161698917],
             ['date' => '2022-05-05 19:20:00', 'sl' => 45.0030002455117],
             ['date' => '2022-05-21 08:15:00', 'sl' => 60.0016554633466],
             ['date' => '2022-06-05 23:20:00', 'sl' => 75.0029037529872],
