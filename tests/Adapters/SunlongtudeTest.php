@@ -31,6 +31,24 @@ class SunlongtudeTest extends TestCase
     }
 
     /**
+     * Kiểm tra các giá trị trước năm 1970
+     *
+     * @covers Sunlongitude
+     * @return void
+     */
+    public function testBefore1970() {
+        // 1969-01-15 10:30:00 UTC
+        $sl = Sunlongitude::createFromDates(1969, 1, 15, 10, 30);
+        $prev = $sl->toPrevious(2);
+        $start = $sl->toStartingPoint();
+
+        $this->assertEquals('13/01/1969', $prev->toDateTimeFormat('d/m/Y'));
+        $this->assertEquals('05/01/1969 12', $start->toDateTimeFormat('d/m/Y H'));
+        $this->assertEquals('1/5/1969', jdtogregorian($start->getJdn()));
+        $this->assertLessThan(0.0166, abs($sl->getDegree() - 295.120198912363));
+    }
+
+    /**
      * Kiểm tra 1 tập hợp kết quả trong năm 2022, sai số trong phạm vi 60 phút 
      * (1 giờ) - tương đương ~0.0166 độ.
      *
