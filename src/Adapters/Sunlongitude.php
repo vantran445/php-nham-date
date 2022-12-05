@@ -89,11 +89,15 @@ class Sunlongitude
     /**
      * Tạo đối tượng từ một đối tượng có triển khai DateTimeInterface
      *
-     * @param DateTimeInterface $date
+     * @param ?DateTimeInterface $date
      * @return Sunlongitude
      */
-    public static function createFromDate(DateTimeInterface $date): Sunlongitude
+    public static function createFromDate(?DateTimeInterface $date = null): Sunlongitude
     {
+        if ($date === null) {
+            $date = new DateTime();
+        }
+
         return Sunlongitude::createFromDates(
             $date->format('Y'),
             $date->format('m'),

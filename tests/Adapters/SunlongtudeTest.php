@@ -141,6 +141,18 @@ class SunlongtudeTest extends TestCase
     }
 
     /**
+     * Kiểm tra khởi tạo nhanh thời điểm 'hiện tại'
+     *
+     * @covers Sunlongitude
+     * @return void
+     */
+    public function testCreateFromNullDateTime()
+    {
+        $sl = Sunlongitude::createFromDate();
+        $this->assertInstanceOf(Sunlongitude::class, $sl);
+    }
+
+    /**
      * Dữ liệu so sánh trong năm 2022, được lấy vào thời điểm mùng 1 và 15 mỗi
      * tháng. vào lúc 00:00:00 (0 giờ sáng), múi giờ GMT+7
      *
