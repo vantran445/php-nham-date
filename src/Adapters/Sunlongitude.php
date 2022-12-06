@@ -192,8 +192,7 @@ class Sunlongitude
      */
     public function toDate(): DateTime
     {
-        $sign = $this->timezone < 0? '-' : '+';
-        $timezone = $sign . $this->timezone;
+        $timezone = $this->timezone < 0? $this->timezone : '+' . $this->timezone;
         $date = new DateTime('', new DateTimeZone($timezone));
 
         return $date->setTimestamp($this->toTimestamp());

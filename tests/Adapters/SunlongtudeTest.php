@@ -2,6 +2,7 @@
 
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use Vantran\PhpNhamDate\Adapters\Sunlongitude;
@@ -228,5 +229,18 @@ class SunlongtudeTest extends TestCase
             ['date' => '2022-12-07 10:40:00', 'sl' => 255.002954228177],
             ['date' => '2022-12-22 04:40:00', 'sl' => 270.001981764075],
         ];
+    }
+
+    /**
+     * Kiểm tra sửa lỗi chuyển đổi thành đối tượng PHP DateTime khi sử dụng các 
+     * múi giờ âm.
+     *
+     * @covers Sunlongitude
+     * @return void
+     */
+    public function testNegativeTimezone()
+    {
+        $sl = Sunlongitude::createFromDates(2022, 8, 21, 10, 0, 0, -3);
+        $this->assertInstanceOf('DateTimeInterface', $sl->toDate());
     }
 }
