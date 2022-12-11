@@ -4,7 +4,7 @@ class TimeStampToJulian extends BaseJulianAdapter
 {
     public function __construct(
         protected float|int $timestamp,
-        protected int $offset = 0
+        protected int $offset
     ) {
         $this->jdn = ($this->timestamp + $offset)  / 86400 + self::JDN_EPOCH_TIME;
     }
