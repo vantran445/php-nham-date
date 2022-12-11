@@ -5,7 +5,7 @@ use Vantran\PhpNhamDate\Adapters\Julian\BaseJulianAdapter;
 
 class JulianAdapter
 {
-    protected static $adapters =[
+    protected static $adapters = [
         'from_jd' => \Vantran\PhpNhamDate\Adapters\Julian\BaseJulianAdapter::class,
         'from_primmitive' => \Vantran\PhpNhamDate\Adapters\Julian\DateTimePrimitiveToJulian::class,
         'from_datetime'  => \Vantran\PhpNhamDate\Adapters\Julian\DateTimeToJulian::class,
