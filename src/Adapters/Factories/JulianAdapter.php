@@ -29,12 +29,8 @@ class JulianAdapter
 
         switch ($total) {
             case 0:
-                $class = self::$adapters['from_datetime'];
-                $adapter =new $class();
-                break;
-
             case 1:
-                $arg = $arguments[0];
+                $arg = isset($arguments[0])? $arguments[0] : null;
 
                 if ($arg === null || $arg instanceof DateTimeInterface ) {
                     $class = self::$adapters['from_datetime'];
@@ -43,35 +39,16 @@ class JulianAdapter
                     $class = self::$adapters['from_jd'];
                 }
 
-                $adapter =new $class($arg);
-
                 break;
             
             case 2:
                 $class = self::$adapters['from_unix'];
-                $adapter =new $class($arguments[0], $arguments[1]);
-
                 break;
             
             default:
                 $class = self::$adapters['from_primmitive'];
-
-                for ($i = 3; $i <= 5; ++$i) {
-                    if (!isset($arguments[$i])) {
-                        $arguments[$i] = 0;
-                    }
-                }
-
-                $adapter =new $class(
-                    $arguments[0], // Years
-                    $arguments[1], // Months
-                    $arguments[2], // Days
-                    $arguments[3], // Hours
-                    $arguments[4], // Minutes
-                    $arguments[5], // Seconds
-                );
         }
 
-        return $adapter;
+        return new $class(...$arguments);
     }
 }
