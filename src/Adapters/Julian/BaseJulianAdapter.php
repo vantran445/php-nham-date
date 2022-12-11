@@ -48,6 +48,10 @@ class BaseJulianAdapter
      */
     public function toTimestamp(int|float|callable $offset = 0)
     {
+        if (is_callable($offset)) {
+            $offset = $offset();
+        }
+        
         if (!$this->unix) {
             $this->unix = ($this->getJdn() - self::JDN_EPOCH_TIME) * 86400;
         }
