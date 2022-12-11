@@ -63,7 +63,7 @@ class BaseJulianAdapter
      * Chuyển đổi ngày Julius về đối tượng triển khai DateTimeInterface
      *
      * @param DateTimeZone|string|null $timezone
-     * @return DateTimeInterface
+     * @return \DateTimeInterface
      */
     public function toDateTime(string|null|DateTimeZone $timezone = null)
     {
