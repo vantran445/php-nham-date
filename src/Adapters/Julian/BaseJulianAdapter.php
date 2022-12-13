@@ -5,7 +5,7 @@ use DateTimeZone;
 
 class BaseJulianAdapter
 {
-    const JDN_EPOCH_TIME = 2440587.5;
+    const JDN_EPOCH_TIME = 2440588;
 
     protected $attributes;
     protected $datetimeClass = DateTime::class;
@@ -75,7 +75,7 @@ class BaseJulianAdapter
             $date = new $this->datetimeClass('now', $timezone);
             $date->setTimestamp($this->toTimestamp());
 
-            $this->datetime = $date->format('c');
+            $this->datetime = $date->format('Y-m-d H:i:s');
         }
 
         return (isset($date)) ? $date : new $this->datetimeClass($this->datetime, $timezone);
