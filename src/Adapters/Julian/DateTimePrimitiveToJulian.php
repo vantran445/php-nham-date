@@ -15,7 +15,7 @@ class DateTimePrimitiveToJulian extends BaseJulianAdapter
 
     protected function _getJdn()
     {
-        $jdn = gregoriantojd($this->m, $this->d, $this->Y) - 0.5;
+        $jdn = gregoriantojd($this->m, $this->d, $this->Y);
         $jdn += ($this->H * 3600 + $this->i * 60 + $this->s) / 86400;
 
         return $jdn;
