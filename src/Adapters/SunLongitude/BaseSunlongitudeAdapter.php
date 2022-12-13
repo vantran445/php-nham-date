@@ -1,7 +1,9 @@
 <?php namespace Vantran\PhpNhamDate\Adapters\SunLongitude;
 
+use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
+use Exception;
 use Vantran\PhpNhamDate\Adapters\Factories\JulianAdapter;
 
 class BaseSunlongitudeAdapter
@@ -52,7 +54,7 @@ class BaseSunlongitudeAdapter
      */
     protected function convert(float|int $jdn): float
     {
-        $T = ($jdn - 2451545 - $this->offset / 86400) / 36525; // Time in Julian centuries from 2000-01-01 12:00:00 GMT
+        $T = ($jdn - 2451545.5 - $this->offset / 86400) / 36525; // Time in Julian centuries from 2000-01-01 12:00:00 GMT
         $dr = M_PI / 180; // degree to radian
         $L = 280.460 + 36000.770 * $T; //  degree
         $G = 357.528 + 35999.050 * $T; //  degree
@@ -95,7 +97,7 @@ class BaseSunlongitudeAdapter
      * @param boolean $withHour Có bao gồm giờ hay không, mặc định không
      * @param boolean $withMinutes Có bao gồm phút hay không, mặc định không.
      * 
-     * @return Sunlongitude
+     * @return BaseSunlongitudeAdapter
      */
     public function toStartingPoint()
     {
@@ -170,11 +172,22 @@ class BaseSunlongitudeAdapter
         $jdn = $jdn + ($degree % 360) * 1.0145625;
         $sl = $this->convert($jdn);
 
-        // Đảm bảo giá trị để bắt đầu tính toán sẽ nhỏ hơn giá trị mong muốn
+        // Đảm bảo giá trị bắt đầu tính toán sẽ nhỏ hơn giá trị mong muốn
+        if ($sl > $deg && floor($deg) == 0) {
+            $jdn -= ($jdn - floor($jdn) + 3);
+            $sl = $this->convert($jdn);
+        }
+
+        $counter = 0;
         while (
-            $sl > $deg ||
+            $sl > $deg && floor($deg) != 0 ||
             $deg > 345 && $sl < 15
         ) {
+            if ($counter > 360) {
+                throw new Exception("Error. Some operation is not correct.");
+            }
+            
+            $counter ++;
             $jdn --;
             $sl = $this->convert($jdn);
         }
@@ -186,13 +199,16 @@ class BaseSunlongitudeAdapter
         // Tìm kết quả
         $match = function(float &$jdn, float &$sl, float $unit, float $degree) {
             $counter = 0;
+            $flooredDeg = floor($degree);
+            
             while ($counter < 60) {
                 $jdNext = $jdn + $unit;
                 $slNext = $this->convert($jdNext);
 
                 if (
-                    ($slNext >= $degree) ||
-                    ($degree > 345 && $slNext < 15 && $sl > 345)
+                    ($slNext >= $degree && $flooredDeg != 0) ||
+                    ($degree > 345 && $slNext < 15 && $sl > 345) ||
+                    ($flooredDeg == 0 && $slNext < 1 && $sl > 345)
                 ) {
                     break;
                 }
@@ -220,7 +236,7 @@ class BaseSunlongitudeAdapter
      *
      * @param integer|float $jdn
      * @param integer|float $sl
-     * @return Sunlongitude
+     * @return BaseSunlongitudeAdapter
      */
     protected function cloneNewInstance(int|float $jdn, int|float $sl)
     {
@@ -236,7 +252,7 @@ class BaseSunlongitudeAdapter
      * 
      * @param integer $degree Xác định số đo góc sẽ được cộng thêm từ góc hiện
      * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 + 15 = 29 độ.
-     * @return Sunlongitude
+     * @return BaseSunlongitudeAdapter
      */
     public function toNext(int|float $degree = 15) 
     {
@@ -253,7 +269,7 @@ class BaseSunlongitudeAdapter
      * 
      * @param integer $degree Xác định số đo góc sẽ được trừ đi kể từ góc hiện
      * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 - 15 = 259.
-     * @return Sunlongitude
+     * @return BaseSunlongitudeAdapter
      */
     public function toPrevious(int|float $degree = 15) 
     {   
@@ -285,7 +301,7 @@ class BaseSunlongitudeAdapter
      * Chuyển đổi góc KDMT thành đối tượng DateTime
      *
      * @param string|null|DateTimeZone|null $timezone
-     * @return DateTimeInterface
+     * @return DateTimeInterface|DateTime
      */
     public function toDateTime(string|null|DateTimeZone $timezone = null): DateTimeInterface
     {

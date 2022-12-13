@@ -155,8 +155,27 @@ class SunLongitudeTest extends TestCase
                 $nextDegree += 360;
             }
 
-            $slNext = $slStart->toNext($nextDegree)->getDegree();
-            $this->assertLessThanOrEqual(0.001, abs($data['sl'] - $slNext));
+            $slNext = $slStart->toNext($nextDegree);
+            $output = $slNext->getDegree();
+
+            $this->assertLessThanOrEqual(
+                0.01, 
+                abs($data['sl'] - $output),
+                sprintf(
+                    "Error result:
+                    Date in: %s |   Date out: %s
+                    SL expect: %f   |   SL ouput: %f
+                    Added deg: %f
+                    SL start: %f
+                    ",
+                    $data['date'],
+                    $slNext->toDateTime('+0700')->format('Y-m-d H:i:s'),
+                    $data['sl'],
+                    $output,
+                    $nextDegree,
+                    $slStart->getDegree()
+                )
+            );
         }
     }
 
