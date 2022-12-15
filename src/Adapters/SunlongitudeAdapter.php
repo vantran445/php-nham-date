@@ -1,12 +1,12 @@
-<?php namespace Vantran\PhpNhamDate\Adapters\SunLongitude;
+<?php namespace Vantran\PhpNhamDate\Adapters;
 
 use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
 use Exception;
-use Vantran\PhpNhamDate\Adapters\Factories\JulianAdapter;
+use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 
-class BaseSunlongitudeAdapter
+class SunlongitudeAdapter
 {
     const JD_EACH_HOUR = 0.04166666666;
     const JD_EACH_MINUTE = 0.00069444444;
@@ -30,6 +30,61 @@ class BaseSunlongitudeAdapter
         protected int $offset
     ) {
         $this->sl = $this->convert($this->jdn);
+    }
+
+    /**
+     * Chuyển đổi KDMT từ đối tượng triển khai DateTimeInterface
+     *
+     * @param DateTimeInterface|null $datetime
+     * @return SunLongitudeAdapter
+     */
+    public static function fromDateTime(?DateTimeInterface $datetime = null): SunLongitudeAdapter
+    {
+        if (!$datetime) {
+            $datetime = new DateTime('now', new DateTimeZone('UTC'));
+        }
+
+        $jdn = JulianAdapter::fromDateTime($datetime)->getJdn();
+        return new self($jdn, $datetime->getOffset());
+    }
+
+    /**
+     * Chuyển đổi KDMT từ tem thời gian Unix
+     *
+     * @param integer|float $timestamp
+     * @param integer $offset
+     * @return SunlongitudeAdapter
+     */
+    public static function fromTimestamp(int|float $timestamp, int $offset): SunlongitudeAdapter
+    {
+        $jdn = JulianAdapter::fromTimestamp($timestamp, $offset)->getJdn();
+        return new self($jdn, $offset);
+    }
+
+    /**
+     * Chuyển đổi KDMT từ nhóm thời gian nguyên thủy
+     *
+     * @param integer $offset
+     * @param integer $Y    năm gồm 4 chữ số
+     * @param integer $m    tháng từ 1 đến 12
+     * @param integer $d    ngày từ 1 đến 31
+     * @param integer $H    giờ từ 0 đến 23
+     * @param integer $i    phút từ 0 đến 59
+     * @param integer $s    giây từ 0 đến 59
+     * @return SunlongitudeAdapter
+     */
+    public static function fromDateTimePrimitive(
+        int $offset,
+        int $Y,
+        int $m,
+        int $d,
+        int $H = 0,
+        int $i = 0,
+        int $s = 0
+    ): SunlongitudeAdapter
+    {
+        $jdn = JulianAdapter::fromDateTimePrimitive($Y, $m, $d, $H, $i, $s)->getJdn();
+        return new self($jdn, $offset);
     }
 
     /**
@@ -159,7 +214,7 @@ class BaseSunlongitudeAdapter
     }
 
     /**
-     * Khớp số ngày Julian và số đo KDMT về một góc trước đó (tìm lùi về)
+     * Khớp số ngày Julian và số đo KDMT về một góc kế tiếp
      *
      * @param float $jdn Ngày Julian bắt đầu
      * @param float $sl Số đo KDMT bắt đầu
@@ -293,7 +348,7 @@ class BaseSunlongitudeAdapter
      */
     public function toTimeStamp(int $offset = 0)
     {
-        $adapter = JulianAdapter::make($this->jdn);
+        $adapter = JulianAdapter::fromJdn($this->jdn);
         return $adapter->toTimeStamp($offset);
     }
 
@@ -305,7 +360,7 @@ class BaseSunlongitudeAdapter
      */
     public function toDateTime(string|null|DateTimeZone $timezone = null): DateTimeInterface
     {
-        $adapter = JulianAdapter::make($this->jdn);
+        $adapter = JulianAdapter::fromJdn($this->jdn);
         return $adapter->toDateTime($timezone);
     }
 
