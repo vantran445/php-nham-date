@@ -14,52 +14,16 @@ class JulianAdapterTest extends TestCase
      */
     public function testToTimestamp()
     {
-        // Epoch start
-        $baseTimeStamp = 0;
-        $jdn = new JulianAdapter();
+        $jdn = fn($d) => JulianAdapter::JDN_EPOCH_TIME + $d;
 
-        $this->assertEquals($baseTimeStamp, $jdn->toTimestamp());
+        for ($i = 0; $i <= 10; $i ++) {
+            $d = rand(-36.524, 36.524);
 
-        // Before epoch
-        $d = 10;
-        $jdn = new JulianAdapter(JulianAdapter::JDN_EPOCH_TIME - $d);
+            $timstamp = $d * 86400;
+            $jdAdapter = JulianAdapter::setJdn($jdn($d));
 
-        $this->assertEquals(($baseTimeStamp - $d * 86400), $jdn->toTimestamp());
-
-        //After Epoch
-        $d = 20;
-        $jdn = new JulianAdapter(JulianAdapter::JDN_EPOCH_TIME + $d);
-
-        $this->assertEquals(($baseTimeStamp + $d * 86400), $jdn->toTimestamp());
-    }
-
-    /**
-     * Kiểm tra chuyển đổi ngày đối tượng DateTime
-     *
-     * @covers JulianAdapter
-     * @return void
-     */
-    public function testToDateTime()
-    {
-        // Local Test
-        $datetimeFormat = '1970-01-01T00:00:00+07:00';
-        $jdAdapter = new JulianAdapter();
-        $datetime = $jdAdapter->toDateTime('+0700');
-
-        $this->assertEquals($datetimeFormat, $datetime->format('c'));
-
-        // UTC test
-        $format = '2022-10-30T16:04:05+00:00';
-        $jdAdapter = JulianAdapter::fromDateTimePrimitive(
-            2022,
-            10,
-            30,
-            16,
-            04,
-            05
-        );
-
-        $this->assertEquals($format, $jdAdapter->toDateTime()->format('c'));
+            $this->assertEquals($timstamp, $jdAdapter->toTimestamp());
+        }
     }
 
     /**
@@ -89,8 +53,7 @@ class JulianAdapterTest extends TestCase
         $date = new DateTime('now');
 
         for ($i = 0; $i < 10; $i ++) {
-            $offset = $date->getOffset();
-            $jdAdapter = JulianAdapter::fromTimestamp($date->getTimestamp(), $offset);
+            $jdAdapter = JulianAdapter::fromTimestamp($date->getTimestamp());
             $jdAdapterCom = JulianAdapter::fromDateTime($date);
 
             $this->assertEquals(round($jdAdapterCom->getJdn(), 6), round($jdAdapter->getJdn(), 6));

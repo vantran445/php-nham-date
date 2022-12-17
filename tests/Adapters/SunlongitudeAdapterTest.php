@@ -4,6 +4,7 @@ use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
+use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 use Vantran\PhpNhamDate\Adapters\SunlongitudeAdapter;
 
 class SunlongitudeAdapterTest extends TestCase
@@ -98,10 +99,15 @@ class SunlongitudeAdapterTest extends TestCase
      */
     public function test2022Resuilt(string $date, float $slVal)
     {
-        $datetime = new DateTime("{$date}T00:00:00+0700");
-        $sl = SunlongitudeAdapter::fromDateTime($datetime);
+        $datetime = new DateTime("{$date}T00:00:00+0000");
+        $jdnAdapter = JulianAdapter::fromDateTime($datetime);
 
-        $this->assertLessThan(0.0166, abs($slVal - $sl->getDegree()));
+        $datetime->setTimezone(new DateTimeZone('Asia/Ho_Chi_Minh'));
+
+        $slAdapter = SunlongitudeAdapter::fromDateTime($datetime);
+
+        $this->assertLessThan(0.0166, abs($slVal - $slAdapter->getDegree()));
+        $this->assertEquals($jdnAdapter->getJdn(), $slAdapter->getJdn());
     }
 
     /**
@@ -150,21 +156,7 @@ class SunlongitudeAdapterTest extends TestCase
 
             $this->assertLessThanOrEqual(
                 0.01, 
-                abs($data['sl'] - $output),
-                sprintf(
-                    "Error result:
-                    Date in: %s |   Date out: %s
-                    SL expect: %f   |   SL ouput: %f
-                    Added deg: %f
-                    SL start: %f
-                    ",
-                    $data['date'],
-                    $slNext->toDateTime('+0700')->format('Y-m-d H:i:s'),
-                    $data['sl'],
-                    $output,
-                    $nextDegree,
-                    $slStart->getDegree()
-                )
+                abs($data['sl'] - $output)
             );
         }
     }

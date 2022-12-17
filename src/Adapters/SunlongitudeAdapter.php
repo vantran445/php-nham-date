@@ -6,6 +6,11 @@ use DateTimeZone;
 use Exception;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 
+/**
+ * Hỗ trợ chuyển đổi một số loại đầu vào thông dụng thành góc Kinh độ mặt trời và ngược lại
+ * 
+ * @author Văn Trần <caovan.info@gmail.com>
+ */
 class SunlongitudeAdapter
 {
     const JD_EACH_HOUR = 0.04166666666;
@@ -52,12 +57,12 @@ class SunlongitudeAdapter
      * Chuyển đổi KDMT từ tem thời gian Unix
      *
      * @param integer|float $timestamp
-     * @param integer $offset
+     * @param integer $offset Phần bù múi giờ địa phương so với UTC tính bằng giây
      * @return SunlongitudeAdapter
      */
     public static function fromTimestamp(int|float $timestamp, int $offset): SunlongitudeAdapter
     {
-        $jdn = JulianAdapter::fromTimestamp($timestamp, $offset)->getJdn();
+        $jdn = JulianAdapter::fromTimestamp($timestamp)->getJdn();
         return new self($jdn, $offset);
     }
 
@@ -147,12 +152,12 @@ class SunlongitudeAdapter
     }
 
     /**
-     * Trả về đối tượng với là điểm khởi đầu của một điểm KDMT.
+     * Trả về đối tượng mới với là điểm khởi đầu của một điểm KDMT.
      *
      * @param boolean $withHour Có bao gồm giờ hay không, mặc định không
      * @param boolean $withMinutes Có bao gồm phút hay không, mặc định không.
      * 
-     * @return BaseSunlongitudeAdapter
+     * @return SunlongitudeAdapter
      */
     public function toStartingPoint()
     {
@@ -291,7 +296,7 @@ class SunlongitudeAdapter
      *
      * @param integer|float $jdn
      * @param integer|float $sl
-     * @return BaseSunlongitudeAdapter
+     * @return SunlongitudeAdapter
      */
     protected function cloneNewInstance(int|float $jdn, int|float $sl)
     {
@@ -307,7 +312,7 @@ class SunlongitudeAdapter
      * 
      * @param integer $degree Xác định số đo góc sẽ được cộng thêm từ góc hiện
      * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 + 15 = 29 độ.
-     * @return BaseSunlongitudeAdapter
+     * @return SunlongitudeAdapter
      */
     public function toNext(int|float $degree = 15) 
     {
@@ -324,7 +329,7 @@ class SunlongitudeAdapter
      * 
      * @param integer $degree Xác định số đo góc sẽ được trừ đi kể từ góc hiện
      * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 - 15 = 259.
-     * @return BaseSunlongitudeAdapter
+     * @return SunlongitudeAdapter
      */
     public function toPrevious(int|float $degree = 15) 
     {   
@@ -337,31 +342,13 @@ class SunlongitudeAdapter
     }
 
     /**
-     * Chuyển đổi góc KDMT về tem thời gian Unix. Tem thời gian nhận được theo
-     * giờ UTC+0. 
-     *
-     * @param (callable():int|float)|int|float $offset khi sử dụng múi giờ KHÁC UTC+0, cần xác định phần bù (tính bằng 
-     *                                                 giây) để kết quả trả về  chính xác. Chẳng hạn, Việt Nam sử dụng 
-     *                                                 múi giờ GMT+7 vào thời điểm 2022 thì phần bù là 25200 giây, công 
-     *                                                 thức cơ bản để tính phần bù này là: offset = 7 x 3600.
+     * Chuyển đổi góc KDMT về tem thời gian Unix. Tem thời gian nhận được theo giờ UTC+0.
+     * 
      * @return int|float
      */
-    public function toTimeStamp(int $offset = 0)
+    public function toTimeStamp()
     {
-        $adapter = JulianAdapter::fromJdn($this->jdn);
-        return $adapter->toTimeStamp($offset);
-    }
-
-    /**
-     * Chuyển đổi góc KDMT thành đối tượng DateTime
-     *
-     * @param string|null|DateTimeZone|null $timezone
-     * @return DateTimeInterface|DateTime
-     */
-    public function toDateTime(string|null|DateTimeZone $timezone = null): DateTimeInterface
-    {
-        $adapter = JulianAdapter::fromJdn($this->jdn);
-        return $adapter->toDateTime($timezone);
+        return JulianAdapter::setJdn($this->jdn)->toTimeStamp();
     }
 
     /**
