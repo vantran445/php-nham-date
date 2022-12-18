@@ -116,7 +116,7 @@ class MoonPhaseAdapter extends MoonPhase
      */
     public static function fromJdn(int|float $jdn, int $offset): MoonPhaseAdapter
     {
-        $timestamp = JulianAdapter::setJdn($jdn)->toTimestamp($offset);
+        $timestamp = JulianAdapter::setJdn($jdn)->getTimestamp($offset);
         return new self($timestamp);
     }
 
@@ -142,8 +142,8 @@ class MoonPhaseAdapter extends MoonPhase
         int $s = 0
     ): MoonPhaseAdapter
     {
-        $jdAdapter = JulianAdapter::fromDateTimePrimitive($Y, $m, $d, $H, $i, $s);
-        $timestamp = $jdAdapter->toTimestamp($offset);
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive($offset, $Y, $m, $d, $H, $i, $s);
+        $timestamp = $jdAdapter->getTimestamp();
 
         return new self($timestamp);
     }

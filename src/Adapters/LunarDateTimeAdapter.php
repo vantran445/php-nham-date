@@ -44,7 +44,7 @@ class LunarDateTimeAdapter
     public function getWinterSolsticeSunLongitude(int $Y): SunlongitudeAdapter
     {
         $sl = SunlongitudeAdapter::fromDateTimePrimitive($this->offset, $Y, 12, 30);
-        return $sl->toStartingPoint();
+        return $sl->getLongitudeNewTerm();
     }
 
     /**
@@ -56,7 +56,7 @@ class LunarDateTimeAdapter
     public function getNewMoon11thMonth(int $Y): NewMoonAdapter
     {
         $sunlongitude = $this->getWinterSolsticeSunLongitude($Y);
-        $newMoon = NewMoonAdapter::fromJdn($sunlongitude->getJdn());
+        $newMoon = NewMoonAdapter::fromJdn($sunlongitude->getJdn() + 1);
 
         return $newMoon;
     }
@@ -83,17 +83,17 @@ class LunarDateTimeAdapter
          * Tháng Chạp (12) và tháng Giêng không bao giờ được chọn làm tháng nhuận, và phải sau tháng 2 âm lịch mới có
          * thể có tháng 2 nhuận, vậy ta bắt đầu tính từ điểm sóc của tháng sau tháng 2 âm lịch.
          */
-        $newMoon = $this->getNewMoon11thMonth($this->Y - 1)->toNext(3);
+        $newMoon = $this->getNewMoon11thMonth($this->Y - 1)->getNext(3);
 
         /**
          * Xác định điểm khởi trung khí gần nhất của tháng sau tháng 2 âm lịch. Lưu ý có 12 trung khí là vị trí kinh độ
          * mặt trời ở các góc chia hết cho 30 (0, 30, 60...)
          */
         // $sunlongitude = SunlongitudeAdapter::fromTimestamp($newMoon->getTimestamp(), $this->offset);
-        // $sunlongitude = $sunlongitude->toStartingPoint();
+        // $sunlongitude = $sunlongitude->getLongitudeNewTerm();
 
         // if ($sunlongitude->getDegree(false) % 30 != 0) {
-        //     $sunlongitude->toNext(15);
+        //     $sunlongitude->getNext(15);
         // }
 
         /**
@@ -102,26 +102,26 @@ class LunarDateTimeAdapter
          */
         $offset = 2;
         for ($i = 0; $i < 13; $i ++) {
-            $slNewMoon = SunlongitudeAdapter::fromTimestamp($newMoon->getTimestamp(), $this->offset);
-            $slNewTerm = $slNewMoon->toStartingPoint();
+            $slNewMoon = SunlongitudeAdapter::fromTimestamp($newMoon->getTimestamp());
+            $slNewTerm = $slNewMoon->getLongitudeNewTerm();
 
             if ($slNewTerm->getDegree(false) % 30 == 0) {
-                $diffJdn = $slNewMoon->getJdn(false) - $slNewTerm->getJdn(false);
+                $diffJdn = $slNewMoon->getTimestamp() - $slNewTerm->getTimestamp();
 
                 if ($diffJdn == 0) {
                     continue;
                 }
-                elseif ($diffJdn >= 1 && $diffJdn <= 5) {
-                    $nextNewMoon = $newMoon->toNext(1);
-                    $nextSlNewTerm = $slNewTerm->toNext(30);
+                elseif ($diffJdn >= 84600 && $diffJdn <= 86400 * 5) {
+                    $nextNewMoon = $newMoon->getNext(1);
+                    $nextSlNewTerm = $slNewTerm->getNext(30);
 
-                    if ($nextSlNewTerm->getJdn(false) >= $nextNewMoon->toJdn(false)) {
+                    if ($nextSlNewTerm->getTimestamp() >= $nextNewMoon->getTimestamp()) {
                         break;
                     }
                 }
             }
 
-            $newMoon = $newMoon->toNext(1);
+            $newMoon = $newMoon->getNext(1);
             $offset ++;
         }
 

@@ -54,6 +54,7 @@ class NewMoonAdapterTest extends TestCase
         $nmDateTimeAdapter = NewMoonAdapter::fromDateTime($date);
         $nmJdnAdapter = NewMoonAdapter::fromJdn($jdn);
         $nmDateTimePrimitiveAdapter = NewMoonAdapter::fromDateTimePrimitive(
+            $date->getOffset(),
             $date->format('Y'),
             $date->format('m'),
             $date->format('d'),
@@ -99,12 +100,12 @@ class NewMoonAdapterTest extends TestCase
     public function testToNextNewMoon()
     {
         $data = $this->additionNewMoon2020Provider();
-        $newMoon = NewMoonAdapter::fromDateTimePrimitive(2020, 1, 5);
+        $newMoon = NewMoonAdapter::fromDateTimePrimitive($this->offset, 2020, 1, 5);
         $counter = 1;
 
         foreach ($data as $nm) {
             $dateExpected = $nm['solar'];
-            $nextNewMoon = $newMoon->toNext($counter);
+            $nextNewMoon = $newMoon->getNext($counter);
             
             $datetime = new DateTime('', new DateTimeZone('+0700'));
             $datetime->setTimestamp($nextNewMoon->getTimestamp());
@@ -124,12 +125,12 @@ class NewMoonAdapterTest extends TestCase
     public function testToPreviousNewMoon()
     {
         $data = $this->additionNewMoon2020Provider();
-        $newMoon = NewMoonAdapter::fromDateTimePrimitive(2021, 3, 25);
+        $newMoon = NewMoonAdapter::fromDateTimePrimitive($this->offset, 2021, 3, 25);
         $counter = 13;
 
         foreach ($data as $nm) {
             $dateExpected = $nm['solar'];
-            $nextNewMoon = $newMoon->toPrevious($counter);
+            $nextNewMoon = $newMoon->getPrevious($counter);
             
             $datetime = new DateTime('', new DateTimeZone('+0700'));
             $datetime->setTimestamp($nextNewMoon->getTimestamp());

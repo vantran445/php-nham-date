@@ -1,64 +1,82 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters;
 
 use DateTime;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 
 class JulianAdapterTest extends TestCase
 {
     /**
-     * Kiểm tra chuyển đổi ngày Julius về Unix
+     * Kiểm tra khởi tạo đối tượng
      *
      * @covers JulianAdapter
      * @return void
      */
-    public function testToTimestamp()
+    public function testInit()
     {
-        $jdn = fn($d) => JulianAdapter::JDN_EPOCH_TIME + $d;
-
-        for ($i = 0; $i <= 10; $i ++) {
-            $d = rand(-36.524, 36.524);
-
-            $timstamp = $d * 86400;
-            $jdAdapter = JulianAdapter::setJdn($jdn($d));
-
-            $this->assertEquals($timstamp, $jdAdapter->toTimestamp());
-        }
+        $jdn = new JulianAdapter();
+        $this->assertEquals($jdn::JDN_EPOCH_TIME, $jdn->getJdn());
     }
 
     /**
-     * Kiểm tra chuuyển đổi Julian từ triển khai DateTimeInterface
+     * Kiểm tra tạo bộ chuyển đổi mới từ đối tượng DateTime
      *
      * @covers JulianAdapter
      * @return void
      */
-    public function testDateTimeToJulian()
+    public function testCreateFromDateTime()
     {
-        $datetime = new DateTime('2022-10-10T10:10:00+0000');
+        $datetime = new DateTime();
         $jdAdapter = JulianAdapter::fromDateTime($datetime);
-        $jdn = round($jdAdapter->getJdn(), 5);
         
-        $this->assertEquals(2459863.42361, $jdn);
-        $this->assertLessThanOrEqual(0.00001, abs($jdAdapter->toTimestamp() - $datetime->getTimestamp()));
+        $expect = gregoriantojd(
+            $datetime->format('n'),
+            $datetime->format('j'),
+            $datetime->format('Y')
+        );
+
+        $this->assertEquals($expect, $jdAdapter->getJdn(false));
     }
 
     /**
-     * Kiểm tra chuyển đổi Unix thành Julian
+     * Kiểm tra tạo bộ chuyển đổi mới từ timestamp
      *
      * @covers JulianAdapter
      * @return void
      */
-    public function testTimestampToJulian()
+    public function testCreateFromTimestamp()
     {
-        $date = new DateTime('now');
+        $timestamp = time();
+        $jdAdapter = JulianAdapter::fromTimestamp($timestamp);
 
-        for ($i = 0; $i < 10; $i ++) {
-            $jdAdapter = JulianAdapter::fromTimestamp($date->getTimestamp());
-            $jdAdapterCom = JulianAdapter::fromDateTime($date);
+        $this->assertEquals($timestamp, $jdAdapter->getTimestamp());
+    }
 
-            $this->assertEquals(round($jdAdapterCom->getJdn(), 6), round($jdAdapter->getJdn(), 6));
+    /**
+     * Kiểm tra tạo bộ chuyển đổi từ nhóm thời gian nguyên thủy
+     *
+     * @covers JulianAdapter
+     * @return void
+     */
+    public function testCreateDateTimePrimitive()
+    {
+        // UTC
+        $datetime = new DateTime('2020-10-20T00:00:00+0000');
+        $jdUtc = JulianAdapter::fromDateTime($datetime);
 
-            $date->modify('- 1 year');
-        }
+        $datetime->setTimezone(new DateTimeZone('Asia/Ho_Chi_Minh'));
+        $jdLocal = JulianAdapter::fromDateTimePrimitive(
+            $datetime->getOffset(),
+            $datetime->format('Y'),
+            $datetime->format('m'),
+            $datetime->format('d'),
+            $datetime->format('H'),
+            $datetime->format('i'),
+            $datetime->format('s'),
+        );
+        
+        $this->assertEquals($jdUtc->getJdn(), $jdLocal->getJdn());
+        $this->assertEquals($datetime->getTimestamp(), $jdLocal->getTimestamp());
     }
 }

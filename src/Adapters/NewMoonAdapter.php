@@ -11,7 +11,7 @@ use Exception;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class NewMoonAdapter
+class NewMoonAdapter implements JulianAccessableInterface, TimestampAccessableInterface
 {
     /**
      * Bộ chuyển đổi các pha Mặt trăng
@@ -54,7 +54,7 @@ class NewMoonAdapter
      */
     public static function fromJdn(int|float $jdn): NewMoonAdapter
     {
-        $timestamp = JulianAdapter::setJdn($jdn)->toTimestamp();
+        $timestamp = JulianAdapter::setJdn($jdn)->getTimestamp();
         return new self($timestamp);
     }
 
@@ -70,6 +70,7 @@ class NewMoonAdapter
      * @return NewMoonAdapter
      */
     public static function fromDateTimePrimitive(
+        int $offset,
         int $Y,
         int $m,
         int $d,
@@ -78,8 +79,8 @@ class NewMoonAdapter
         int $s = 0
     ): NewMoonAdapter
     {
-        $jdAdapter = JulianAdapter::fromDateTimePrimitive($Y, $m, $d, $H, $i, $s);
-        $timestamp = $jdAdapter->toTimestamp();
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive($offset, $Y, $m, $d, $H, $i, $s);
+        $timestamp = $jdAdapter->getTimestamp();
 
         return new self($timestamp);
     }
@@ -90,7 +91,7 @@ class NewMoonAdapter
      * @param integer $position bao nhiêu điểm tiếp theo cần tính, mặc định 1 tức điểm kế tiếp
      * @return NewMoonAdapter
      */
-    public function toNext(int $position = 1): NewMoonAdapter
+    public function getNext(int $position = 1): NewMoonAdapter
     {
         if ($position === 0) {
             throw new Exception('Error. You are at the current new moon.');
@@ -106,25 +107,35 @@ class NewMoonAdapter
      * @param integer $position Bao nhiêu điểm trước đó cần tính, mặc định 1 tức điểm kế trước
      * @return NewMoonAdapter
      */
-    public function toPrevious(int $position = 1): NewMoonAdapter
+    public function getPrevious(int $position = 1): NewMoonAdapter
     {
         $position = -1 * abs($position);
-        return $this->toNext($position);
+        return $this->getNext($position);
     }
 
     /**
-     * Chuyển đổi điểm sóc về số ngày Julian
+     * @inheritDoc
      *
-     * @param bool $withDecimal bao gồm phần thập phân trong kết quả
-     * @return integer|float
+     * @param boolean $withDecimal
+     * @return float
      */
-    public function toJdn(bool $withDecimal = true): int|float
+    public function getJdn(bool $withDecimal = true): float
     {
-        return JulianAdapter::fromTimestamp($this->moonPhase->getPhaseNewMoon())->getJdn($withDecimal);
+        return JulianAdapter::fromTimestamp($this->getTimestamp())->getJdn($withDecimal);
     }
 
     /**
-     * Lấy tem thời gian Unix điểm sóc
+     * @inheritDoc
+     *
+     * @return float
+     */
+    public function getJdnDecimal(): float
+    {
+        return JulianAdapter::fromTimestamp($this->getTimestamp())->getJdnDecimal();
+    }
+
+    /**
+     * @inheritDoc
      *
      * @return integer|float
      */

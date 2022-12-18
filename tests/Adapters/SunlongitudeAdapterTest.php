@@ -1,21 +1,30 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters;
 
 use DateTime;
-use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
-use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 use Vantran\PhpNhamDate\Adapters\SunlongitudeAdapter;
 
 class SunlongitudeAdapterTest extends TestCase
 {
-     /**
-     * Dữ liệu 24 điểm khởi đầu của các góc KDMT trong năm 2022 theo dương lịch, 
-     * mỗi điễm cách nhau ~15 độ. Cũng tương ứng với điểm khởi của 24 tiết khí 
-     * trong âm lịch. Múi giờ của tập hợp dữ liệu là GMT +7 (Việt Nam).
+    /**
+     * Múi giờ mặc định của các dữ liệu trong phần test này này GMT+7
+     *
+     * @var DateTimeZone
+     */
+    protected $timezone;
+
+    public function __construct(?string $name = null, array $data = [], $dataName = '')
+    {
+        $this->timezone = new DateTimeZone('+0700');
+        parent::__construct($name, $data, $dataName);
+    }
+
+    /**
+     * Dữ liệu 24 điểm khởi đầu của các góc KDMT trong năm 2022 theo dương lịch,  mỗi điễm cách nhau ~15 độ. Cũng tương 
+     * ứng với điểm khởi của 24 tiết khí trong âm lịch. Múi giờ của tập hợp dữ liệu là GMT +7 (Việt Nam).
      * 
-     * Lưu ý, thời gian về điểm bắt đầu của một góc KDMT có thể chênh lệnh một
-     * vài phút.
+     * Lưu ý, thời gian về điểm bắt đầu của một góc KDMT có thể chênh lệnh một vài phút.
      *
      * @link https://clearskytonight.com/projects/astronomycalculator/sun/sunlongitude.html
      * @return array
@@ -51,86 +60,69 @@ class SunlongitudeAdapterTest extends TestCase
     }
 
     /**
-     * Dữ liệu so sánh trong năm 2022, được lấy vào thời điểm mùng 1 và 15 mỗi
-     * tháng. vào lúc 00:00:00 (0 giờ sáng), múi giờ GMT+7
+     * Kiểm tra tạo bộ chuyển đổi từ đối tượng DateTime
      *
-     * @link https://clearskytonight.com/projects/astronomycalculator/sun/sunlongitude.html
-     * @return array
-     */
-    public function addition2022Provider()
-    {
-        return [
-            ['date' => '2022-01-01', 'sl' => 280.242268375155],
-            ['date' => '2022-01-15', 'sl' => 294.51149074748],
-            ['date' => '2022-02-01', 'sl' => 311.802017600556],
-            ['date' => '2022-02-15', 'sl' => 325.984503615979],
-            ['date' => '2022-03-01', 'sl' => 340.087163738169],
-            ['date' => '2022-03-15', 'sl' => 354.098325158878],
-            ['date' => '2022-04-01', 'sl' => 10.9651653198798],
-            ['date' => '2022-04-15', 'sl' => 24.7352277079809],
-            ['date' => '2022-05-01', 'sl' => 40.3398261656552],
-            ['date' => '2022-05-15', 'sl' => 53.8912431206067],
-            ['date' => '2022-06-01', 'sl' => 70.2382449850886],
-            ['date' => '2022-06-15', 'sl' => 83.6340137171336],
-            ['date' => '2022-07-01', 'sl' => 98.9025082335133],
-            ['date' => '2022-07-15', 'sl' => 112.250716282277],
-            ['date' => '2022-08-01', 'sl' => 128.485719751876],
-            ['date' => '2022-08-15', 'sl' => 141.900275567573],
-            ['date' => '2022-09-01', 'sl' => 158.284797045662],
-            ['date' => '2022-09-15', 'sl' => 171.869113028216],
-            ['date' => '2022-10-01', 'sl' => 187.524156529792],
-            ['date' => '2022-10-15', 'sl' => 201.33372535134],
-            ['date' => '2022-11-01', 'sl' => 218.257000197568],
-            ['date' => '2022-11-15', 'sl' => 232.301809709032],
-            ['date' => '2022-12-01', 'sl' => 248.467971354473],
-            ['date' => '2022-12-15', 'sl' => 262.678611917571],
-        ];
-    }
-
-    /**
-     * Kiểm tra 1 tập hợp kết quả trong năm 2022, sai số trong phạm vi 60 phút 
-     * (1 giờ) - tương đương ~0.0166 độ.
-     *
-     * @dataProvider addition2022Provider
      * @covers SunlongitudeAdapter
-     * @param string $date
-     * @param float $slVal
-     * @return void
-     */
-    public function test2022Resuilt(string $date, float $slVal)
-    {
-        $datetime = new DateTime("{$date}T00:00:00+0000");
-        $jdnAdapter = JulianAdapter::fromDateTime($datetime);
-
-        $datetime->setTimezone(new DateTimeZone('Asia/Ho_Chi_Minh'));
-
-        $slAdapter = SunlongitudeAdapter::fromDateTime($datetime);
-
-        $this->assertLessThan(0.0166, abs($slVal - $slAdapter->getDegree()));
-        $this->assertEquals($jdnAdapter->getJdn(), $slAdapter->getJdn());
-    }
-
-    /**
-     * Kiểm tra 1 tập hợp kết quả 24 điểm bắt đầu KDMT trong năm 2022, sai số
-     * trong phạm vi 60 phút (1 giờ) - tương đương ~0.0166 độ.
-     *
      * @dataProvider addition2022BeginPointProvider
-     * @covers SunlongitudeAdapter
      * @param string $dateStr
-     * @param float $slCompare
+     * @param float $slExpected
      * @return void
      */
-    public function testStartingPoints(string $dateStr, float $slCompare)
+    public function testCreateFromDate(string $dateStr, float $slExpected)
     {
-        $date = new DateTimeImmutable($dateStr, new DateTimeZone('+0700'));
-        $nextDate = $date->modify('+ 1 day');
+        $datetime = new DateTime($dateStr, $this->timezone);
+        $slAdapter = SunlongitudeAdapter::fromDateTime($datetime);
+        $diff = $slExpected - $slAdapter->getDegree();
 
-        $slBegin = SunLongitudeAdapter::fromDateTime($nextDate)
-                        ->toStartingPoint()
-                        ->getDegree();
+        $this->assertLessThanOrEqual(0.0166, $diff);
+    }
 
-        $this->assertLessThanOrEqual(0.0166, abs($slBegin - $slCompare));
-        $this->assertEquals(floor($slCompare), floor($slBegin));
+    /**
+     * Kiểm tra tạo bộ chuyển đổi từ thời gian nguyên thủy
+     *
+     * @covers SunlongitudeAdapter
+     * @dataProvider addition2022BeginPointProvider
+     * @param string $dateStr
+     * @param float $slExpected
+     * @return void
+     */
+    public function testCreateFromDateTimePrimitive(string $dateStr, float $slExpected)
+    {
+        $datetime = new DateTime($dateStr, $this->timezone);
+        $slAdapter = SunlongitudeAdapter::fromDateTimePrimitive(
+            $datetime->getOffset(),
+            $datetime->format('Y'),
+            $datetime->format('m'),
+            $datetime->format('d'),
+            $datetime->format('H'),
+            $datetime->format('i'),
+            $datetime->format('s'),
+        );
+
+        $diff = $slExpected - $slAdapter->getDegree();
+
+        $this->assertLessThanOrEqual(0.0166, $diff);
+    }
+
+    /**
+     * Kiểm tra tìm điểm bắt đầu 15 độ
+     *
+     * @covers SunlongitudeAdapter
+     * @dataProvider addition2022BeginPointProvider
+     * @param string $dateStr
+     * @param float $slExpected
+     * @return void
+     */
+    public function testGetLongitudeNewTerm(string $dateStr, float $slExpected)
+    {
+        $datetime = new DateTime($dateStr, new DateTimeZone('+0700'));
+        $timestamp = $datetime->getTimestamp() + 864000; // Add extra 10 days
+        $slAdapter = SunlongitudeAdapter::fromTimestamp($timestamp, $datetime->getOffset());
+        $slNewTerm = $slAdapter->getLongitudeNewTerm();
+
+        $diff = $slExpected - $slNewTerm->getDegree();
+
+        $this->assertLessThanOrEqual(0.0166, $diff);
     }
 
     /**
@@ -151,7 +143,7 @@ class SunlongitudeAdapterTest extends TestCase
                 $nextDegree += 360;
             }
 
-            $slNext = $slStart->toNext($nextDegree);
+            $slNext = $slStart->getNext($nextDegree);
             $output = $slNext->getDegree();
 
             $this->assertLessThanOrEqual(
@@ -169,11 +161,11 @@ class SunlongitudeAdapterTest extends TestCase
      */
     public function testPreviosPositions()
     {
-        $_2022data = $this->addition2022Provider();
+        $_2022data = $this->addition2022BeginPointProvider();
         $counter = count($_2022data);
         $slStart = SunLongitudeAdapter::fromDateTime(new DateTime('2023-01-01T00:00:00+0700'));
 
-        $slPrev = $slStart->toPrevious()->getDegree();
+        $slPrev = $slStart->getPrevious()->getDegree();
 
         for ($i = $counter; $i > 0; $i --) {
             $slCompare = $_2022data[$i - 1]['sl'];
@@ -183,9 +175,10 @@ class SunlongitudeAdapterTest extends TestCase
                 $prevDegress + 360;
             }
 
-            $slPrev = $slStart->toPrevious($prevDegress);
+            $slPrev = $slStart->getPrevious($prevDegress);
 
             $this->assertLessThan(0.001, abs($slPrev->getDegree() - $slCompare));
         }
     }
+
 }

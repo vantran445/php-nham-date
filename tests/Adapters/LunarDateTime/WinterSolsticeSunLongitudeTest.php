@@ -49,7 +49,7 @@ class WinterSolsticeSunLongitudeTest extends TestCase
      */
     public function testWinterSolsticeStartingPoints($Y, $m, $d)
     {
-        $jdAdapter = JulianAdapter::fromDateTimePrimitive($Y, $m, $d); // Lúc 00:00 UTC
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive($this->offset, $Y, $m, $d, 0, 0, 0); // Lúc 00:00 UTC
         $lunar = new LunarDateTimeAdapter($Y, $m, $d, $this->offset);
         $winterSolsticeSl = $lunar->getWinterSolsticeSunLongitude($Y);
 

@@ -1,6 +1,8 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters\LunarDateTime;
 
+use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 use Vantran\PhpNhamDate\Adapters\LunarDateTime\BaseLunarDateTimeAdapter;
@@ -58,17 +60,24 @@ class NewMoon11thMonthTest extends TestCase
         $lunar = new LunarDateTimeAdapter($Y, $m, $d, $this->offset); // Theo giờ địa phương
         $newMoon11th = $lunar->getNewMoon11thMonth($Y);
 
-        /**
-         * Lưu ý rằng điểm New Moon được tính theo giờ UTC mà không chịu ảnh hưởng bởi vị trí người đứng, do vậy cần
-         * hiểu ý nghĩa của 2 biến dưới đây:
-         * 1. $jdnExpected: là số ngày Julian từ các thông số đầu vào, nhưng không phải theo UTC mà theo giờ địa
-         *                 phương (GMT+7)
-         * 2. jdnToMatched: Mặc định theo UTC, vì vậy để so sánh với (1) cần phải cộng thêm phần bù cho giờ địa phương
-         *                  ($this->offset / 3600 / 24).
-         */
-        $jdnExpected = JulianAdapter::fromDateTimePrimitive($Y, $m, $d)->getJdn(false);
-        $jdnToMatched = floor($newMoon11th->toJdn() + $this->offset / 3600 / 24);
+        $datetime = new DateTimeImmutable("$Y-$m-{$d}T00:00:00+0700");
+        $newMoonDateTime = $datetime->setTimestamp($newMoon11th->getTimestamp());
 
-        $this->assertEquals($jdnExpected, $jdnToMatched);
+        /**
+         * Thời điểm khởi trăng mới phải lớn hơn hoặc bằng với dữ liệu so sánh, nhưng không được vượt quá 1 ngày. Lưu ý
+         * so sánh timestamp tức so sánh UTC với nhau mà bỏ qua giờ địa phương.
+         */
+        $this->assertTrue(
+            $newMoon11th->getTimestamp() >= $datetime->getTimestamp() &&
+            $newMoon11th->getTimestamp() - $datetime->getTimestamp() < 86400,
+            sprintf(
+                "Something went wrong:
+                Expected date: %s
+                Output date: %s
+                ",
+                $datetime->format('c'),
+                $newMoonDateTime->format('c')
+            )
+    );
     }
 }

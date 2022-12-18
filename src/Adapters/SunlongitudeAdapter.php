@@ -11,7 +11,7 @@ use Vantran\PhpNhamDate\Adapters\JulianAdapter;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class SunlongitudeAdapter
+class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessableInterface
 {
     const JD_EACH_HOUR = 0.04166666666;
     const JD_EACH_MINUTE = 0.00069444444;
@@ -31,8 +31,7 @@ class SunlongitudeAdapter
      * @param integer $offset
      */
     public function __construct(
-        protected float|int $jdn,
-        protected int $offset
+        protected float|int $jdn
     ) {
         $this->sl = $this->convert($this->jdn);
     }
@@ -60,10 +59,10 @@ class SunlongitudeAdapter
      * @param integer $offset Phần bù múi giờ địa phương so với UTC tính bằng giây
      * @return SunlongitudeAdapter
      */
-    public static function fromTimestamp(int|float $timestamp, int $offset): SunlongitudeAdapter
+    public static function fromTimestamp(int|float $timestamp): SunlongitudeAdapter
     {
         $jdn = JulianAdapter::fromTimestamp($timestamp)->getJdn();
-        return new self($jdn, $offset);
+        return new self($jdn);
     }
 
     /**
@@ -88,7 +87,7 @@ class SunlongitudeAdapter
         int $s = 0
     ): SunlongitudeAdapter
     {
-        $jdn = JulianAdapter::fromDateTimePrimitive($Y, $m, $d, $H, $i, $s)->getJdn();
+        $jdn = JulianAdapter::fromDateTimePrimitive($offset, $Y, $m, $d, $H, $i, $s)->getJdn();
         return new self($jdn, $offset);
     }
 
@@ -114,7 +113,7 @@ class SunlongitudeAdapter
      */
     protected function convert(float|int $jdn): float
     {
-        $T = ($jdn - 2451545.5 - $this->offset / 86400) / 36525; // Time in Julian centuries from 2000-01-01 12:00:00 GMT
+        $T = ($jdn - 2451545.5) / 36525; // Time in Julian centuries from 2000-01-01 12:00:00 GMT
         $dr = M_PI / 180; // degree to radian
         $L = 280.460 + 36000.770 * $T; //  degree
         $G = 357.528 + 35999.050 * $T; //  degree
@@ -159,13 +158,13 @@ class SunlongitudeAdapter
      * 
      * @return SunlongitudeAdapter
      */
-    public function toStartingPoint()
+    public function getLongitudeNewTerm()
     {
         $degree = $this->legitimizeDegee(function () {
             return $this->sl - floor($this->sl) + $this->sl % 15;
         });
 
-        return $this->toPrevious($degree);
+        return $this->getPrevious($degree);
     }
 
     /**
@@ -314,7 +313,7 @@ class SunlongitudeAdapter
      * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 + 15 = 29 độ.
      * @return SunlongitudeAdapter
      */
-    public function toNext(int|float $degree = 15) 
+    public function getNext(int|float $degree = 15) 
     {
         $jdn = $this->jdn;
         $sl = $this->sl;
@@ -331,7 +330,7 @@ class SunlongitudeAdapter
      * tại. Ví dụ, góc hiện tại là 274, sẽ trả về  góc 274 - 15 = 259.
      * @return SunlongitudeAdapter
      */
-    public function toPrevious(int|float $degree = 15) 
+    public function getPrevious(int|float $degree = 15) 
     {   
         $jdn = $this->jdn;
         $sl = $this->sl;
@@ -339,16 +338,6 @@ class SunlongitudeAdapter
         $this->matchToPrevPosition($jdn, $sl, $degree);
 
         return $this->cloneNewInstance($jdn, $sl);
-    }
-
-    /**
-     * Chuyển đổi góc KDMT về tem thời gian Unix. Tem thời gian nhận được theo giờ UTC+0.
-     * 
-     * @return int|float
-     */
-    public function toTimeStamp()
-    {
-        return JulianAdapter::setJdn($this->jdn)->toTimeStamp();
     }
 
     /**
@@ -374,12 +363,33 @@ class SunlongitudeAdapter
     }
 
     /**
-     * Trả về số ngày Julian tương ứng với KDMT
+     * @inheritDoc
      *
-     * @return float|int
+     * @param boolean $withDecimal
+     * @return float
      */
-    public function getJdn(bool $withDecimal = true): float|int
+    public function getJdn(bool $withDecimal = true): float
     {
-        return $withDecimal ? $this->jdn : floor($this->jdn);
+        return JulianAdapter::setJdn($this->jdn)->getJdn($withDecimal);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return float
+     */
+    public function getJdnDecimal(): float
+    {
+        return JulianAdapter::setJdn($this->jdn)->getJdnDecimal();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return integer|float
+     */
+    public function getTimestamp(): int|float
+    {
+        return JulianAdapter::setJdn($this->jdn)->getTimestamp();
     }
 }
