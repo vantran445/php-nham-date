@@ -6,11 +6,9 @@ use DateTimeInterface;
  * Lớp hỗ trợ chuyển đổi các loại giá trị đầu vào thành số ngày Julian và chuyển đổi ngược số ngày Julian thành một số 
  * loại giá trị thông dụng khác.
  * 
- * Lưu ý rằng số ngày Julian tương ứng với giờ UTC mà không sử dụng giờ địa phương.
- * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class JulianAdapter implements JulianAccessableInterface, TimestampAccessableInterface
+class JulianAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface
 {
     /**
      * Số ngày Julian tại thời điểm 1990-01-01T00:00+0000
@@ -46,11 +44,8 @@ class JulianAdapter implements JulianAccessableInterface, TimestampAccessableInt
     }
 
     /**
-     * Chuyển đổi từ các tham số ngày tháng nguyên thủy (dương lịch). Vì ngày Julian tương ứng với UTC, do đó nếu các
-     * mốc thời gian đầu vào là giờ địa phương, cần phản xác định được phần bù thời gian chênh lệnh để nhận kết quả chính
-     * xác. Chẳng hạn, vào năm 2022 tại Việt Nam sử dụng múi giờ GMT+7, ta được 7 x 3600 = 25200 giây
+     * Chuyển đổi từ các tham số ngày tháng nguyên thủy (dương lịch) theo giờ địa phương
      *
-     * @param integer $offset   phần bù múi giờ địa phương, tính bằng giây
      * @param integer $Y        năm với 4 chữ số, vd: 1990, 2022...
      * @param integer $m        tháng trong năm - từ 1 - 12
      * @param integer $d        ngày trong tháng từ 1- 31
@@ -59,14 +54,10 @@ class JulianAdapter implements JulianAccessableInterface, TimestampAccessableInt
      * @param integer $s        số giây từ 0 - 59
      * @return JulianAdapter
      */
-    public static function fromDateTimePrimitive(int $offset, int $Y, int $m, int $d, int $H = 0, int $i = 0, int $s = 0): JulianAdapter
+    public static function fromDateTimePrimitive(int $Y, int $m, int $d, int $H = 0, int $i = 0, int $s = 0): JulianAdapter
     {
         $jdn = gregoriantojd($m, $d, $Y);
         $jdn += ($H * 3600 + $i * 60 + $s) / 86400;
-
-        if ($offset !== 0) {
-            $jdn -= $offset / 86400;
-        }
 
         return new self($jdn);
     }
@@ -88,14 +79,15 @@ class JulianAdapter implements JulianAccessableInterface, TimestampAccessableInt
 
 
     /**
-     * Chuyển đổi từ tem thời gian Unix
-     *
+     * Chuyển đổi từ tem thời gian Unix. Vì tem thời gian Unix là mốc UTC, do đó đầu ra sẽ tự động được cộng thêm phần
+     * bù múi giờ địa phương
+     * 
      * @param integer|float $timestamp tem thời gian Unix 
      * @return JulianAdapter
      */
     public static function fromTimestamp(int|float $timestamp): JulianAdapter
     {
-        $jdn = $timestamp  / 86400 + self::JDN_EPOCH_TIME;
+        $jdn = $timestamp / 86400 + self::JDN_EPOCH_TIME;
         return new self($jdn);
     }
 
@@ -133,6 +125,16 @@ class JulianAdapter implements JulianAccessableInterface, TimestampAccessableInt
     }
 
     /**
+     * Trả về số ngày Julian địa phương từ ngày Julian UTC
+     *
+     * @return float
+     */
+    protected function getJdnOffset($jdn): float
+    {
+        return $jdn + self::getOffset() / 86400;
+    }
+
+    /**
      * @inheritDoc
      * 
      * @return float
@@ -145,11 +147,13 @@ class JulianAdapter implements JulianAccessableInterface, TimestampAccessableInt
     /**
      * @inheritDoc
      *
+     * @param boolean $withDecimal
      * @return float
      */
-    public function getJdnDecimal(): float
+    public function getLocalJdn(bool $withDecimal = true): float
     {
-        return $this->getJdn() - $this->getJdn(false);
+        $jdn = $this->getJdnOffset($this->jdn);
+        return $withDecimal ? $jdn : floor($jdn);   
     }
 
     /**

@@ -3,80 +3,81 @@
 use DateTime;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
+use Vantran\PhpNhamDate\Adapters\BaseAdapter;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 
+/**
+ * Lớp kiểm tra bộ chuyển đổi Julian
+ */
 class JulianAdapterTest extends TestCase
 {
     /**
-     * Kiểm tra khởi tạo đối tượng
+     * Kiểm tra khởi tạo từ thời gian nguyên thủy
      *
      * @covers JulianAdapter
-     * @return void
+     * @return JulianAdapter
      */
-    public function testInit()
+    public function testCreateFromDateTimePrimitive(): JulianAdapter
     {
-        $jdn = new JulianAdapter();
-        $this->assertEquals($jdn::JDN_EPOCH_TIME, $jdn->getJdn());
-    }
-
-    /**
-     * Kiểm tra tạo bộ chuyển đổi mới từ đối tượng DateTime
-     *
-     * @covers JulianAdapter
-     * @return void
-     */
-    public function testCreateFromDateTime()
-    {
-        $datetime = new DateTime();
-        $jdAdapter = JulianAdapter::fromDateTime($datetime);
-        
-        $expect = gregoriantojd(
-            $datetime->format('n'),
-            $datetime->format('j'),
-            $datetime->format('Y')
-        );
-
-        $this->assertEquals($expect, $jdAdapter->getJdn(false));
-    }
-
-    /**
-     * Kiểm tra tạo bộ chuyển đổi mới từ timestamp
-     *
-     * @covers JulianAdapter
-     * @return void
-     */
-    public function testCreateFromTimestamp()
-    {
-        $timestamp = time();
-        $jdAdapter = JulianAdapter::fromTimestamp($timestamp);
-
-        $this->assertEquals($timestamp, $jdAdapter->getTimestamp());
-    }
-
-    /**
-     * Kiểm tra tạo bộ chuyển đổi từ nhóm thời gian nguyên thủy
-     *
-     * @covers JulianAdapter
-     * @return void
-     */
-    public function testCreateDateTimePrimitive()
-    {
-        // UTC
-        $datetime = new DateTime('2020-10-20T00:00:00+0000');
-        $jdUtc = JulianAdapter::fromDateTime($datetime);
-
-        $datetime->setTimezone(new DateTimeZone('Asia/Ho_Chi_Minh'));
-        $jdLocal = JulianAdapter::fromDateTimePrimitive(
-            $datetime->getOffset(),
-            $datetime->format('Y'),
-            $datetime->format('m'),
-            $datetime->format('d'),
-            $datetime->format('H'),
-            $datetime->format('i'),
-            $datetime->format('s'),
+        $expected = JulianAdapter::JDN_EPOCH_TIME; // 2440588 - 1990-01-01T00:00:00+0000
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive(
+            1970,
+            1,
+            1,
+            0,
+            0,
+            0
         );
         
-        $this->assertEquals($jdUtc->getJdn(), $jdLocal->getJdn());
-        $this->assertEquals($datetime->getTimestamp(), $jdLocal->getTimestamp());
+        $this->assertEquals($expected, $jdAdapter->getJdn());
+
+        return $jdAdapter;
+    }
+
+    /**
+     * Kiểm tra khởi tạo từ Timestamp
+     *
+     * @depends testCreateFromDateTimePrimitive
+     * @covers JulianAdapter
+     * 
+     * @param JulianAdapter $baseAdapter
+     * @return void
+     */
+    public function testCreateFromTimestamp(JulianAdapter $baseAdapter)
+    {
+        $jdAdapter = JulianAdapter::fromTimestamp(0);
+        $this->assertEquals($baseAdapter->getJdn(), $jdAdapter->getJdn());
+    }
+
+    /**
+     * Trong việc lập lịch, Dương lịch bắt đầu ngày mới lúc 00:00, Âm lịch bắt đầu lúc 23:00 hoặc 00:00, ngày Julian thông
+     * thường cũng được tính toán vào lúc 00:00 để đồng bộ. Do sự chênh lệch múi giờ, nếu sử dụng số ngày Julian theo 
+     * UTC sẽ gặp một số khó khăn trong quá trình tính toán vì phải xét đến phần thập phân của đầu ra. Bài kiểm tra này
+     * kiểm tra đầu ra của số ngày Julian theo giờ địa phương chứ không theo UTC nữa.
+     *
+     * @covers JulianAdapter
+     * @return void
+     */
+    public function testLocalOutput()
+    {
+        /**
+         * UTC chênh lệnh 7 giờ so với giờ VN vào thời điểm 2022, tức vào lúc 19:00 theo giờ UTC thì tại Việt Nam đã
+         * chuyển sang 00:00 ngày mới tiếp theo, do đó bộ đếm Julian giờ địa phương phải tăng lên giá trị của ngày mới
+         * để thuận tiện cho việc so sánh.
+         */
+        BaseAdapter::setOffset(25200);
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive(
+            2022,
+            10,
+            15,
+            19,
+            0
+        );
+        $diffDays = $jdAdapter->getLocalJdn(false) - $jdAdapter->getJdn(false);
+
+        $this->assertEquals(1, $diffDays);
+        $this->assertEquals('10/16/2022', jdtogregorian($jdAdapter->getLocalJdn()));
+
+        BaseAdapter::resetDefaultTimeZone();
     }
 }

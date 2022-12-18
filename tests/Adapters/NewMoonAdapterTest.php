@@ -4,6 +4,7 @@ use DateTime;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use Solaris\MoonPhase;
+use Vantran\PhpNhamDate\Adapters\BaseAdapter;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 use Vantran\PhpNhamDate\Adapters\NewMoonAdapter;
 
@@ -54,7 +55,6 @@ class NewMoonAdapterTest extends TestCase
         $nmDateTimeAdapter = NewMoonAdapter::fromDateTime($date);
         $nmJdnAdapter = NewMoonAdapter::fromJdn($jdn);
         $nmDateTimePrimitiveAdapter = NewMoonAdapter::fromDateTimePrimitive(
-            $date->getOffset(),
             $date->format('Y'),
             $date->format('m'),
             $date->format('d'),
@@ -80,7 +80,9 @@ class NewMoonAdapterTest extends TestCase
      */
     public function testCorrectedNewMoon(string $date, string $month)
     {
-        $timezone = new DateTimeZone('+0700');
+        BaseAdapter::resetDefaultTimeZone();
+
+        $timezone = BaseAdapter::getTimeZone();
         $datetime = new DateTime($date, $timezone);
         $datetime->modify('+15 day');
 
@@ -88,7 +90,8 @@ class NewMoonAdapterTest extends TestCase
         $newMoonDate = new DateTime('now', $timezone);
         $newMoonDate->setTimestamp($newMoonAdapter->getTimestamp());
 
-        $this->assertEquals($date, $newMoonDate->format('Y-m-d'));        
+        $this->assertEquals($date, $newMoonDate->format('Y-m-d'));
+        $this->assertEquals($newMoonDate->format('n/j/Y'), jdtogregorian($newMoonAdapter->getLocalJdn()));     
     }
 
     /**
@@ -100,7 +103,7 @@ class NewMoonAdapterTest extends TestCase
     public function testToNextNewMoon()
     {
         $data = $this->additionNewMoon2020Provider();
-        $newMoon = NewMoonAdapter::fromDateTimePrimitive($this->offset, 2020, 1, 5);
+        $newMoon = NewMoonAdapter::fromDateTimePrimitive(2020, 1, 5);
         $counter = 1;
 
         foreach ($data as $nm) {
@@ -125,7 +128,7 @@ class NewMoonAdapterTest extends TestCase
     public function testToPreviousNewMoon()
     {
         $data = $this->additionNewMoon2020Provider();
-        $newMoon = NewMoonAdapter::fromDateTimePrimitive($this->offset, 2021, 3, 25);
+        $newMoon = NewMoonAdapter::fromDateTimePrimitive(2021, 3, 25);
         $counter = 13;
 
         foreach ($data as $nm) {

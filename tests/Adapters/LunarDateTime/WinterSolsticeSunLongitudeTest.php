@@ -1,6 +1,9 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters\LunarDateTime;
 
+use DateTime;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
+use Vantran\PhpNhamDate\Adapters\BaseAdapter;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 use Vantran\PhpNhamDate\Adapters\LunarDateTimeAdapter;
 
@@ -49,12 +52,33 @@ class WinterSolsticeSunLongitudeTest extends TestCase
      */
     public function testWinterSolsticeStartingPoints($Y, $m, $d)
     {
-        $jdAdapter = JulianAdapter::fromDateTimePrimitive($this->offset, $Y, $m, $d, 0, 0, 0); // Lúc 00:00 UTC
-        $lunar = new LunarDateTimeAdapter($Y, $m, $d, $this->offset);
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive($Y, $m, $d); // Lúc 00:00 UTC
+        $lunar = new LunarDateTimeAdapter($Y, $m, $d);
         $winterSolsticeSl = $lunar->getWinterSolsticeSunLongitude($Y);
 
         $inputJdn = $jdAdapter->getJdn();
-        $outputJdn = $winterSolsticeSl->getJdn();
+        $outputJdn = $winterSolsticeSl->getLocalJdn();
+
+        $datetime = new DateTime('now', BaseAdapter::getTimeZone());
+        $datetime->setTimestamp($winterSolsticeSl->getTimestamp());
+
+        // $this->assertEquals(
+        //     "$m/$d/$Y", 
+        //     jdtogregorian($outputJdn),
+        //     sprintf(
+        //         "
+        //         Error found with the infomation:
+        //         - Sun longitude matched: %f
+        //         - Timezone: %s,
+        //         - Local time: %s
+        //         - UTC time: %s
+        //         ",
+        //         $winterSolsticeSl->getDegree(),
+        //         BaseAdapter::getTimeZone()->getName(),
+        //         $datetime->format('c'),
+        //         $datetime->setTimezone(new DateTimeZone('UTC'))->format('c')
+        //     )
+        // );
 
         /**
          * Trong trường hợp ngày tháng cần kiểm tra lớn hơn kết quả đầu ra, thì khoảng cách chỉ nên chênh lệch trong

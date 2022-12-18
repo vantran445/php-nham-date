@@ -1,6 +1,6 @@
 <?php namespace Vantran\PhpNhamDate\Adapters;
 
-class LunarDateTimeAdapter
+class LunarDateTimeAdapter extends BaseAdapter
 {
     protected $attributes = [];
 
@@ -8,7 +8,6 @@ class LunarDateTimeAdapter
         protected int $Y,
         protected int $m,
         protected int $d,
-        protected int $offset
     ) {
         
     }
@@ -43,7 +42,7 @@ class LunarDateTimeAdapter
      */
     public function getWinterSolsticeSunLongitude(int $Y): SunlongitudeAdapter
     {
-        $sl = SunlongitudeAdapter::fromDateTimePrimitive($this->offset, $Y, 12, 30);
+        $sl = SunlongitudeAdapter::fromDateTimePrimitive($Y, 12, 30);
         return $sl->getLongitudeNewTerm();
     }
 
@@ -86,36 +85,25 @@ class LunarDateTimeAdapter
         $newMoon = $this->getNewMoon11thMonth($this->Y - 1)->getNext(3);
 
         /**
-         * Xác định điểm khởi trung khí gần nhất của tháng sau tháng 2 âm lịch. Lưu ý có 12 trung khí là vị trí kinh độ
-         * mặt trời ở các góc chia hết cho 30 (0, 30, 60...)
-         */
-        // $sunlongitude = SunlongitudeAdapter::fromTimestamp($newMoon->getTimestamp(), $this->offset);
-        // $sunlongitude = $sunlongitude->getLongitudeNewTerm();
-
-        // if ($sunlongitude->getDegree(false) % 30 != 0) {
-        //     $sunlongitude->getNext(15);
-        // }
-
-        /**
          * 1 năm nhuận âm lịch có 13 tháng, trừ đi các tháng 11, 12, 1, 2 (đầu) thì còn lại 9 tháng có thể nhuận. Tháng
          * nhuận là tháng không chứa trung khí (tức trong tháng không có ngày nào là ngày bắt đầu các góc 0, 30, 60...)
          */
         $offset = 2;
-        for ($i = 0; $i < 13; $i ++) {
+        for ($i = 0; $i < 9; $i ++) {
             $slNewMoon = SunlongitudeAdapter::fromTimestamp($newMoon->getTimestamp());
             $slNewTerm = $slNewMoon->getLongitudeNewTerm();
 
             if ($slNewTerm->getDegree(false) % 30 == 0) {
-                $diffJdn = $slNewMoon->getTimestamp() - $slNewTerm->getTimestamp();
+                $diffJdn = $slNewMoon->getLocalJdn(false) - $slNewTerm->getLocalJdn(false);
 
                 if ($diffJdn == 0) {
                     continue;
                 }
-                elseif ($diffJdn >= 84600 && $diffJdn <= 86400 * 5) {
+                elseif ($diffJdn >= 1 && $diffJdn <= 5) {
                     $nextNewMoon = $newMoon->getNext(1);
                     $nextSlNewTerm = $slNewTerm->getNext(30);
 
-                    if ($nextSlNewTerm->getTimestamp() >= $nextNewMoon->getTimestamp()) {
+                    if ($nextSlNewTerm->getLocalJdn(false) >= $nextNewMoon->getLocalJdn(false)) {
                         break;
                     }
                 }

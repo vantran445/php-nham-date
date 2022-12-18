@@ -1,11 +1,7 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters\LunarDateTime;
 
-use DateTime;
-use DateTimeImmutable;
-use DateTimeZone;
 use PHPUnit\Framework\TestCase;
-use Vantran\PhpNhamDate\Adapters\JulianAdapter;
-use Vantran\PhpNhamDate\Adapters\LunarDateTime\BaseLunarDateTimeAdapter;
+use Vantran\PhpNhamDate\Adapters\BaseAdapter;
 use Vantran\PhpNhamDate\Adapters\LunarDateTimeAdapter;
 
 /**
@@ -15,13 +11,6 @@ use Vantran\PhpNhamDate\Adapters\LunarDateTimeAdapter;
  */
 class NewMoon11thMonthTest extends TestCase
 {
-    /**
-     * Phần bù múi giờ GMT+7 so với UTC
-     *
-     * @var integer
-     */
-    protected $offset = 25200;
-
     /**
      * Mảng dữ liệu điểm bắt đầu 01 tháng 11 âm lịch của một số năm. Dữ liệu được
      * khớp từ một số phần mềm âm lịch sẵn có bằng các ngôn ngữ khác PHP. Múi giờ
@@ -57,27 +46,16 @@ class NewMoon11thMonthTest extends TestCase
      */
     public function testNewMoonOf11thMonth($Y, $m, $d)
     {
-        $lunar = new LunarDateTimeAdapter($Y, $m, $d, $this->offset); // Theo giờ địa phương
+        BaseAdapter::resetDefaultTimeZone();
+
+        $Y = (int)$Y;
+        $m = (int)$m;
+        $d = (int)$d;
+
+        $lunar = new LunarDateTimeAdapter($Y, $m, $d);
         $newMoon11th = $lunar->getNewMoon11thMonth($Y);
 
-        $datetime = new DateTimeImmutable("$Y-$m-{$d}T00:00:00+0700");
-        $newMoonDateTime = $datetime->setTimestamp($newMoon11th->getTimestamp());
+        $this->assertEquals("$m/$d/$Y", jdtogregorian($newMoon11th->getLocalJdn()));
 
-        /**
-         * Thời điểm khởi trăng mới phải lớn hơn hoặc bằng với dữ liệu so sánh, nhưng không được vượt quá 1 ngày. Lưu ý
-         * so sánh timestamp tức so sánh UTC với nhau mà bỏ qua giờ địa phương.
-         */
-        $this->assertTrue(
-            $newMoon11th->getTimestamp() >= $datetime->getTimestamp() &&
-            $newMoon11th->getTimestamp() - $datetime->getTimestamp() < 86400,
-            sprintf(
-                "Something went wrong:
-                Expected date: %s
-                Output date: %s
-                ",
-                $datetime->format('c'),
-                $newMoonDateTime->format('c')
-            )
-    );
     }
 }

@@ -1,11 +1,7 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters\LunarDateTime;
 
-use DateTime;
 use PHPUnit\Framework\TestCase;
-use Vantran\PhpNhamDate\Adapters\Factories\SunLongitudeAdapter;
-use Vantran\PhpNhamDate\Adapters\LunarDateTime\BaseLunarDateTimeAdapter;
 use Vantran\PhpNhamDate\Adapters\LunarDateTimeAdapter;
-use Vantran\PhpNhamDate\Adapters\MoonPhase;
 
 class LunarLeapMonthTest extends TestCase
 {
@@ -50,7 +46,7 @@ class LunarLeapMonthTest extends TestCase
      */
     public function testLeapMonths(int $year, int $leapMonth)
     {
-        $lunar = new LunarDateTimeAdapter($year, 5, 3, $this->offset);
+        $lunar = new LunarDateTimeAdapter($year, 5, 3);
         $lm = $lunar->getLeapMonth();
 
         $this->assertEquals($leapMonth, $lm);

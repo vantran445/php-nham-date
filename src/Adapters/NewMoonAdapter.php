@@ -1,8 +1,6 @@
 <?php namespace Vantran\PhpNhamDate\Adapters;
 
-use DateTime;
 use DateTimeInterface;
-use DateTimeZone;
 use Exception;
 
 /**
@@ -11,7 +9,7 @@ use Exception;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class NewMoonAdapter implements JulianAccessableInterface, TimestampAccessableInterface
+class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface
 {
     /**
      * Bộ chuyển đổi các pha Mặt trăng
@@ -38,11 +36,8 @@ class NewMoonAdapter implements JulianAccessableInterface, TimestampAccessableIn
      */
     public static function fromDateTime(?DateTimeInterface $datetime = null): NewMoonAdapter
     {
-        if (!$datetime) {
-            $datetime = new DateTime('now', new DateTimeZone('UTC'));
-        }
-
-        return new self($datetime->getTimestamp());
+        $timestamp = (!$datetime)? time() : $datetime->getTimestamp();
+        return new self($timestamp);
     }
 
     /**
@@ -70,7 +65,6 @@ class NewMoonAdapter implements JulianAccessableInterface, TimestampAccessableIn
      * @return NewMoonAdapter
      */
     public static function fromDateTimePrimitive(
-        int $offset,
         int $Y,
         int $m,
         int $d,
@@ -79,7 +73,7 @@ class NewMoonAdapter implements JulianAccessableInterface, TimestampAccessableIn
         int $s = 0
     ): NewMoonAdapter
     {
-        $jdAdapter = JulianAdapter::fromDateTimePrimitive($offset, $Y, $m, $d, $H, $i, $s);
+        $jdAdapter = JulianAdapter::fromDateTimePrimitive($Y, $m, $d, $H, $i, $s);
         $timestamp = $jdAdapter->getTimestamp();
 
         return new self($timestamp);
@@ -127,11 +121,12 @@ class NewMoonAdapter implements JulianAccessableInterface, TimestampAccessableIn
     /**
      * @inheritDoc
      *
+     * @param boolean $withDecimal
      * @return float
      */
-    public function getJdnDecimal(): float
+    public function getLocalJdn(bool $withDecimal = true): float
     {
-        return JulianAdapter::fromTimestamp($this->getTimestamp())->getJdnDecimal();
+        return JulianAdapter::fromTimestamp($this->getTimestamp())->getLocalJdn($withDecimal);
     }
 
     /**

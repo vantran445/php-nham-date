@@ -11,7 +11,7 @@ use Vantran\PhpNhamDate\Adapters\JulianAdapter;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessableInterface
+class SunlongitudeAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface
 {
     const JD_EACH_HOUR = 0.04166666666;
     const JD_EACH_MINUTE = 0.00069444444;
@@ -52,6 +52,11 @@ class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessa
         return new self($jdn, $datetime->getOffset());
     }
 
+    public static function fromJdn(int|float $jdn): SunlongitudeAdapter
+    {
+        return new self($jdn);
+    }
+
     /**
      * Chuyển đổi KDMT từ tem thời gian Unix
      *
@@ -68,7 +73,6 @@ class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessa
     /**
      * Chuyển đổi KDMT từ nhóm thời gian nguyên thủy
      *
-     * @param integer $offset
      * @param integer $Y    năm gồm 4 chữ số
      * @param integer $m    tháng từ 1 đến 12
      * @param integer $d    ngày từ 1 đến 31
@@ -78,7 +82,6 @@ class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessa
      * @return SunlongitudeAdapter
      */
     public static function fromDateTimePrimitive(
-        int $offset,
         int $Y,
         int $m,
         int $d,
@@ -87,8 +90,8 @@ class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessa
         int $s = 0
     ): SunlongitudeAdapter
     {
-        $jdn = JulianAdapter::fromDateTimePrimitive($offset, $Y, $m, $d, $H, $i, $s)->getJdn();
-        return new self($jdn, $offset);
+        $jdn = JulianAdapter::fromDateTimePrimitive($Y, $m, $d, $H, $i, $s)->getJdn();
+        return new self($jdn);
     }
 
     /**
@@ -376,11 +379,12 @@ class SunlongitudeAdapter implements JulianAccessableInterface, TimestampAccessa
     /**
      * @inheritDoc
      *
+     * @param boolean $withDecimal
      * @return float
      */
-    public function getJdnDecimal(): float
+    public function getLocalJdn(bool $withDecimal = true): float
     {
-        return JulianAdapter::setJdn($this->jdn)->getJdnDecimal();
+        return JulianAdapter::setJdn($this->jdn)->getLocalJdn($withDecimal);
     }
 
     /**
