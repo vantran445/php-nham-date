@@ -1,15 +1,12 @@
 <?php namespace Vantran\PhpNhamDate\Tests\Adapters;
 
 use DateTime;
-use DateTimeZone;
-use PHPUnit\Framework\TestCase;
-use Vantran\PhpNhamDate\Adapters\BaseAdapter;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 
 /**
  * Lớp kiểm tra bộ chuyển đổi Julian
  */
-class JulianAdapterTest extends TestCase
+class JulianAdapterTest extends AdapterTestCase
 {
     /**
      * Kiểm tra khởi tạo từ thời gian nguyên thủy
@@ -65,7 +62,6 @@ class JulianAdapterTest extends TestCase
          * chuyển sang 00:00 ngày mới tiếp theo, do đó bộ đếm Julian giờ địa phương phải tăng lên giá trị của ngày mới
          * để thuận tiện cho việc so sánh.
          */
-        BaseAdapter::setOffset(25200);
         $jdAdapter = JulianAdapter::fromDateTimePrimitive(
             2022,
             10,
@@ -77,7 +73,25 @@ class JulianAdapterTest extends TestCase
 
         $this->assertEquals(1, $diffDays);
         $this->assertEquals('10/16/2022', jdtogregorian($jdAdapter->getLocalJdn()));
+    }
 
-        BaseAdapter::resetDefaultTimeZone();
+    /**
+     * Kiểm tra chuyển đổi ngược ngày Julian về mốc ngày tháng năm địa phương.
+     *
+     * @covers JulianAdapter
+     * @return void
+     */
+    public function testGetBaseLocalDateTime()
+    {
+        $datetime = new DateTime('now', JulianAdapter::getTimeZone());
+        $jdAdapter = JulianAdapter::fromDateTime($datetime);
+        $baseDateTime = $jdAdapter->getBaseLocalDateTime();
+
+        $this->assertEquals($datetime->format('Y'), $baseDateTime->year);
+        $this->assertEquals($datetime->format('n'), $baseDateTime->month);
+        $this->assertEquals($datetime->format('j'), $baseDateTime->day);
+        $this->assertEquals($datetime->format('H'), $baseDateTime->hour);
+        $this->assertEquals($datetime->format('i'), $baseDateTime->minute);
+        $this->assertEquals($datetime->format('s'), $baseDateTime->second);
     }
 }

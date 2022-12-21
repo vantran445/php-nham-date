@@ -7,6 +7,7 @@ use Exception;
 use Vantran\PhpNhamDate\Adapters\Interfaces\JulianAccessable;
 use Vantran\PhpNhamDate\Adapters\Interfaces\TimestampAccessable;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
+use Vantran\PhpNhamDate\Adapters\Traits\ToJulian;
 
 /**
  * Hỗ trợ chuyển đổi một số loại đầu vào thông dụng thành góc Kinh độ mặt trời và ngược lại
@@ -15,6 +16,8 @@ use Vantran\PhpNhamDate\Adapters\JulianAdapter;
  */
 class SunlongitudeAdapter extends BaseAdapter implements JulianAccessable, TimestampAccessable
 {
+    use ToJulian;
+    
     const JD_EACH_HOUR = 0.04166666666;
     const JD_EACH_MINUTE = 0.00069444444;
 
@@ -380,28 +383,6 @@ class SunlongitudeAdapter extends BaseAdapter implements JulianAccessable, Times
     public function getDecimal(): float
     {
         return $this->getDegree() - $this->getDegree(false);
-    }
-
-    /**
-     * @inheritDoc
-     *
-     * @param boolean $withDecimal
-     * @return float
-     */
-    public function getJdn(bool $withDecimal = true): float
-    {
-        return JulianAdapter::setJdn($this->jdn)->getJdn($withDecimal);
-    }
-
-    /**
-     * @inheritDoc
-     *
-     * @param boolean $withDecimal
-     * @return float
-     */
-    public function getLocalJdn(bool $withDecimal = true): float
-    {
-        return JulianAdapter::setJdn($this->jdn)->getLocalJdn($withDecimal);
     }
 
     /**
