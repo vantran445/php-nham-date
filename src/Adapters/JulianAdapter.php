@@ -1,6 +1,10 @@
 <?php namespace Vantran\PhpNhamDate\Adapters;
 
 use DateTimeInterface;
+use Vantran\PhpNhamDate\Adapters\Interfaces\DateTimeAccessable;
+use Vantran\PhpNhamDate\Adapters\Traits\ToDateTime;
+use Vantran\PhpNhamDate\Adapters\Traits\ToJulian;
+use Vantran\PhpNhamDate\Adapters\Traits\ToTimestamp;
 
 /**
  * Lớp hỗ trợ chuyển đổi các loại giá trị đầu vào thành số ngày Julian và chuyển đổi ngược số ngày Julian thành một số 
@@ -8,8 +12,11 @@ use DateTimeInterface;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class JulianAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface
+class JulianAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface, DateTimeAccessable
 {
+    use ToJulian;
+    use ToDateTime;
+
     /**
      * Số ngày Julian tại thời điểm 1990-01-01T00:00+0000
      */
@@ -103,70 +110,18 @@ class JulianAdapter extends BaseAdapter implements JulianAccessableInterface, Ti
     }
 
     /**
-     * Magic get
-     *
-     * @param string $name
-     * @return void
-     */
-    public function __get(string $name)
-    {
-        return isset($this->attributes[$name]) ? $this->attributes[$name] : null;
-    }
-
-    /**
-     * Magic set
-     *
-     * @param string $name
-     * @param string $value
-     */
-    public function __set(string $name, string $value)
-    {
-        $this->attributes[$name] = $value;
-    }
-
-    /**
-     * Trả về số ngày Julian địa phương từ ngày Julian UTC
-     *
-     * @return float
-     */
-    protected function getJdnOffset($jdn): float
-    {
-        return $jdn + self::getOffset() / 86400;
-    }
-
-    /**
-     * @inheritDoc
-     * 
-     * @return float
-     */
-    public function getJdn(bool $withDecimal = true): float
-    {
-        return ($withDecimal)? $this->jdn : floor($this->jdn);
-    }
-
-    /**
-     * @inheritDoc
-     *
-     * @param boolean $withDecimal
-     * @return float
-     */
-    public function getLocalJdn(bool $withDecimal = true): float
-    {
-        $jdn = $this->getJdnOffset($this->jdn);
-        return $withDecimal ? $jdn : floor($jdn);   
-    }
-
-    /**
      * @inheritDoc
      *
      * @return integer|float
      */
     public function getTimestamp(): int|float
     {
-        if (!$this->unix) {
-            $this->unix = ($this->getJdn() - self::JDN_EPOCH_TIME) * 86400;
+        if (!$this->timestamp) {
+            $this->timestamp = ($this->getJdn() - self::JDN_EPOCH_TIME) * 86400;
         }
 
-        return $this->unix;
+        return $this->timestamp;
     }
+
+    
 }

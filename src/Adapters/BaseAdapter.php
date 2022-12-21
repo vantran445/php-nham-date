@@ -85,4 +85,34 @@ abstract class BaseAdapter
         self::setTimeZone();
         self::$offset = self::DEFAULT_OFFSET;
     }
+
+    /**
+     * Lưu trữ và truy xuất các giá trị động trong quá trình tính toán
+     *
+     * @var array
+     */
+    protected $attributes = [];
+
+    /**
+     * Magic getter
+     *
+     * @param string $name
+     * @return mixed
+     */
+    public function __get(string $name): mixed
+    {
+        return (isset($this->attributes[$name])) ? $this->attributes[$name] : null;
+    }
+
+    /**
+     * Magic setter
+     *
+     * @param string $name
+     * @param mixed $value
+     */
+    public function __set(string $name, mixed $value)
+    {
+        $this->attributes[$name] = $value;
+    }
+
 }

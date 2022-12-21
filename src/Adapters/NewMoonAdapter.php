@@ -2,6 +2,9 @@
 
 use DateTimeInterface;
 use Exception;
+use Vantran\PhpNhamDate\Adapters\Interfaces\DateTimeAccessable;
+use Vantran\PhpNhamDate\Adapters\Traits\ToDateTime;
+use Vantran\PhpNhamDate\Adapters\Traits\ToJulian;
 
 /**
  * Lớp tìm kiếm thời điểm Trăng mới - còn gọi là điểm Sóc, tức ngày mùng 01 đầu
@@ -9,8 +12,11 @@ use Exception;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface
+class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, DateTimeAccessable
 {
+    use ToJulian;
+    use ToDateTime;
+
     /**
      * Bộ chuyển đổi các pha Mặt trăng
      *
@@ -25,7 +31,8 @@ class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, T
      */
     public function __construct(int|float $timestamp) 
     {
-        $this->moonPhase = new MoonPhaseAdapter($timestamp);
+        $moonPhase = new MoonPhaseAdapter($timestamp);
+        $this->timestamp = $moonPhase->getPhaseNewMoon();
     }
 
     /**
@@ -39,6 +46,33 @@ class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, T
         $timestamp = (!$datetime)? time() : $datetime->getTimestamp();
         return new self($timestamp);
     }
+
+    /**
+     * Phương thức tĩnh tạo nhanh bộ chuyển đổi
+     *
+     * @param integer|float|callable $timestamp
+     * @return NewMoonAdapter
+     */
+    public static function create(int|float|callable $timestamp): NewMoonAdapter
+    {
+        if (is_callable($timestamp)) {
+            $timestamp = $timestamp();
+        }
+
+        return new self($timestamp);
+    }
+
+    /**
+     * Trả về đối tượng mới từ tem thời gian Unix
+     *
+     * @param integer|float $timestamp
+     * @return NewMoonAdapter
+     */
+    public static function setTimestamp(int|float $timestamp): NewMoonAdapter
+    {
+        return new self($timestamp);
+    }
+
 
     /**
      * Chuyển đổi từ số ngày Julian
@@ -110,32 +144,10 @@ class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, T
     /**
      * @inheritDoc
      *
-     * @param boolean $withDecimal
-     * @return float
-     */
-    public function getJdn(bool $withDecimal = true): float
-    {
-        return JulianAdapter::fromTimestamp($this->getTimestamp())->getJdn($withDecimal);
-    }
-
-    /**
-     * @inheritDoc
-     *
-     * @param boolean $withDecimal
-     * @return float
-     */
-    public function getLocalJdn(bool $withDecimal = true): float
-    {
-        return JulianAdapter::fromTimestamp($this->getTimestamp())->getLocalJdn($withDecimal);
-    }
-
-    /**
-     * @inheritDoc
-     *
      * @return integer|float
      */
     public function getTimestamp(): int|float
     {
-        return $this->moonPhase->getPhaseNewMoon();
+        return $this->timestamp;
     }
 }

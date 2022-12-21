@@ -52,6 +52,21 @@ class SunlongitudeAdapter extends BaseAdapter implements JulianAccessableInterfa
         return new self($jdn, $datetime->getOffset());
     }
 
+    /**
+     * Phương thức tĩnh khởi tạo nhanh bộ chuyển đổi
+     *
+     * @param integer|float|callable():integer|float $jdn
+     * @return SunlongitudeAdapter
+     */
+    public static function create(int|float|callable $jdn): SunlongitudeAdapter
+    {
+        if (is_callable($jdn)) {
+            $jdn = $jdn();
+        }
+
+        return new self($jdn);
+    }
+
     public static function fromJdn(int|float $jdn): SunlongitudeAdapter
     {
         return new self($jdn);
