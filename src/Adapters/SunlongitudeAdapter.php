@@ -4,6 +4,8 @@ use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
 use Exception;
+use Vantran\PhpNhamDate\Adapters\Interfaces\JulianAccessable;
+use Vantran\PhpNhamDate\Adapters\Interfaces\TimestampAccessable;
 use Vantran\PhpNhamDate\Adapters\JulianAdapter;
 
 /**
@@ -11,7 +13,7 @@ use Vantran\PhpNhamDate\Adapters\JulianAdapter;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class SunlongitudeAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface
+class SunlongitudeAdapter extends BaseAdapter implements JulianAccessable, TimestampAccessable
 {
     const JD_EACH_HOUR = 0.04166666666;
     const JD_EACH_MINUTE = 0.00069444444;

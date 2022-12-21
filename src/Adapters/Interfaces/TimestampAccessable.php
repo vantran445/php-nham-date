@@ -1,6 +1,6 @@
-<?php namespace Vantran\PhpNhamDate\Adapters;
+<?php namespace Vantran\PhpNhamDate\Adapters\Interfaces;
 
-interface TimestampAccessableInterface
+interface TimestampAccessable
 {
     /**
      * Trả về tem thời gian Unix

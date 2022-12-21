@@ -1,6 +1,6 @@
-<?php namespace Vantran\PhpNhamDate\Adapters;
+<?php namespace Vantran\PhpNhamDate\Adapters\Interfaces;
 
-interface JulianAccessableInterface
+interface JulianAccessable
 {
     /**
      * Trả về số ngày Julian theo giờ địa phương

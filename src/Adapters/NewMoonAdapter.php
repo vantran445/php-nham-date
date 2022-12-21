@@ -3,6 +3,7 @@
 use DateTimeInterface;
 use Exception;
 use Vantran\PhpNhamDate\Adapters\Interfaces\DateTimeAccessable;
+use Vantran\PhpNhamDate\Adapters\Interfaces\JulianAccessable;
 use Vantran\PhpNhamDate\Adapters\Traits\ToDateTime;
 use Vantran\PhpNhamDate\Adapters\Traits\ToJulian;
 
@@ -12,7 +13,7 @@ use Vantran\PhpNhamDate\Adapters\Traits\ToJulian;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class NewMoonAdapter extends BaseAdapter implements JulianAccessableInterface, DateTimeAccessable
+class NewMoonAdapter extends BaseAdapter implements JulianAccessable, DateTimeAccessable
 {
     use ToJulian;
     use ToDateTime;

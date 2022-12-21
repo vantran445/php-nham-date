@@ -2,9 +2,10 @@
 
 use DateTimeInterface;
 use Vantran\PhpNhamDate\Adapters\Interfaces\DateTimeAccessable;
+use Vantran\PhpNhamDate\Adapters\Interfaces\JulianAccessable;
+use Vantran\PhpNhamDate\Adapters\Interfaces\TimestampAccessable;
 use Vantran\PhpNhamDate\Adapters\Traits\ToDateTime;
 use Vantran\PhpNhamDate\Adapters\Traits\ToJulian;
-use Vantran\PhpNhamDate\Adapters\Traits\ToTimestamp;
 
 /**
  * Lớp hỗ trợ chuyển đổi các loại giá trị đầu vào thành số ngày Julian và chuyển đổi ngược số ngày Julian thành một số 
@@ -12,7 +13,7 @@ use Vantran\PhpNhamDate\Adapters\Traits\ToTimestamp;
  * 
  * @author Văn Trần <caovan.info@gmail.com>
  */
-class JulianAdapter extends BaseAdapter implements JulianAccessableInterface, TimestampAccessableInterface, DateTimeAccessable
+class JulianAdapter extends BaseAdapter implements JulianAccessable, DateTimeAccessable
 {
     use ToJulian;
     use ToDateTime;
@@ -72,12 +73,12 @@ class JulianAdapter extends BaseAdapter implements JulianAccessableInterface, Ti
     /**
      * Tạo bộ chuyển đổi từ một bộ chuyển đổi khác
      *
-     * @param JulianAccessableInterface|TimestampAccessableInterface $adapter
+     * @param JulianAccessable|TimestampAccessable $adapter
      * @return JulianAdapter
      */
-    public static function fromAdapter(JulianAccessableInterface|TimestampAccessableInterface $adapter): JulianAdapter
+    public static function fromAdapter(JulianAccessable|TimestampAccessable $adapter): JulianAdapter
     {
-        if ($adapter instanceof JulianAccessableInterface) {
+        if ($adapter instanceof JulianAccessable) {
             return self::setJdn($adapter->getJdn());
         }
 
