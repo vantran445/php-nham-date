@@ -7,6 +7,13 @@
  */
 class LunarDateTimeAdapter extends BaseAdapter
 {
+    /**
+     * Tạo mới đối tượng
+     *
+     * @param integer $Y năm dương lịch - 4 chữ số
+     * @param integer $m tháng dương lịch - từ 1 đến 12
+     * @param integer $d ngày dương lịch - từ 1 đến 31
+     */
     public function __construct(
         protected int $Y,
         protected int $m,
