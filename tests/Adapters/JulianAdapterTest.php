@@ -83,7 +83,7 @@ class JulianAdapterTest extends AdapterTestCase
      */
     public function testGetBaseLocalDateTime()
     {
-        $datetime = new DateTime('now', JulianAdapter::getTimeZone());
+        $datetime = new DateTime('2022-10-20T05:10:30', JulianAdapter::getTimeZone());
         $jdAdapter = JulianAdapter::fromDateTime($datetime);
         $baseDateTime = $jdAdapter->getBaseLocalDateTime();
 
