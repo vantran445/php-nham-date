@@ -90,7 +90,11 @@ trait ToJulian
      */
     public function getBaseLocalDateTime(string $output = JulianAccessable::OBJECT_DATE_TIME): array|stdClass
     {
-        $datetime = $this->toBaseDateTime($this->getLocalJdn());
+        if (!$this->localBaseDateTime) {
+            $this->localBaseDateTime = $this->toBaseDateTime($this->getLocalJdn());
+        }
+
+        $datetime = $this->localBaseDateTime;
         return ($output === JulianAdapter::ARRAY_DATE_TIME) ? $datetime : (object)$datetime;
     }
 }
