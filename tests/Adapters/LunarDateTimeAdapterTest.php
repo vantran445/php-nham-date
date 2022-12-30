@@ -4,93 +4,15 @@ use DateTime;
 use DateTimeImmutable;
 use Vantran\PhpNhamDate\Adapters\BaseAdapter;
 use Vantran\PhpNhamDate\Adapters\LunarDateTimeAdapter;
+use Vantran\PhpNhamDate\Tests\Providers\Addition11thNewMoon;
+use Vantran\PhpNhamDate\Tests\Providers\AdditionLunarLeapMonth;
+use Vantran\PhpNhamDate\Tests\Providers\AdditionNewMoon;
 
 class LunarDateTimeAdapterTest extends AdapterTestCase
 {
-    /**
-     * Điểm Sóc của 13 tháng trong năm 2020 tại Việt Nam (GMT+7)
-     *
-     * @return array
-     */
-    public function additionNewMoon2020Provider(): array
-    {
-        return [
-            ['solar' => '2020-01-25', 'lunar_month' => '1'],
-            ['solar' => '2020-02-23', 'lunar_month' => '2'],
-            ['solar' => '2020-03-24', 'lunar_month' => '3'],
-            ['solar' => '2020-04-23', 'lunar_month' => '4'],
-            ['solar' => '2020-05-23', 'lunar_month' => '4+'],
-            ['solar' => '2020-06-21', 'lunar_month' => '5'],
-            ['solar' => '2020-07-21', 'lunar_month' => '6'],
-            ['solar' => '2020-08-19', 'lunar_month' => '7'],
-            ['solar' => '2020-09-17', 'lunar_month' => '8'],
-            ['solar' => '2020-10-17', 'lunar_month' => '9'],
-            ['solar' => '2020-11-15', 'lunar_month' => '10'],
-            ['solar' => '2020-12-14', 'lunar_month' => '11'],
-            ['solar' => '2021-01-13', 'lunar_month' => '12'],
-        ];
-    }
-
-    /**
-     * Mảng dữ liệu điểm bắt đầu 01 tháng 11 âm lịch của một số năm. Dữ liệu được khớp từ một số phần mềm âm lịch sẵn có 
-     * bằng các ngôn ngữ khác PHP. Múi giờ được xác định là Asia/Ho_Chi_Minh
-     *
-     * @return array
-     */
-    public function addition11thNewMonData(): array
-    {
-        $data = [
-            '2022-11-24',
-            '2021-12-04',
-            '2020-12-14',
-            '2019-11-26',
-            '2018-12-07',
-            '2017-12-18',
-            '2016-11-29',
-            '2015-12-11',
-            '2014-12-22', 
-            '2013-12-03',
-            '2012-12-13'
-        ];
-
-        return array_map(function ($date) {
-            $date = explode('-', $date);
-            return array_map(fn($val) => (int)$val, $date);
-        }, $data);
-    }
-
-    /**
-     * Dữ liệu một số tháng nhuận trong những năm gần đây
-     *
-     * @return array
-     */
-    public function additionLeapMonthProvider(): array
-    {
-        /**
-         * Cấu trúc mảng theo index:
-         * - 0: số của năm (dương lịch & âm lịch)
-         * - 1: số (vị trí) của tháng nhuận âm lịch
-         */
-        return [
-            [2025, 6],
-            [2023, 2],
-            [2020, 4],
-            [2017, 6],
-            [2014, 9],
-            [2012, 4],
-            [2009, 5],
-            [2006, 7],
-            [2004, 2],
-            [2001, 4],
-            [1998, 5],
-            [1995, 8],
-            [1993, 3],
-            [1990, 5],
-            [1987, 7],
-            [1985, 2],
-            [1982, 4],
-        ];
-    }
+    use Addition11thNewMoon;
+    use AdditionLunarLeapMonth;
+    use AdditionNewMoon;
 
     /**
      * Dữ liệu một số thời điểm Âm lịch tương ứng với Dương lịch
