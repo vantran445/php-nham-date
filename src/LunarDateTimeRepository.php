@@ -64,7 +64,7 @@ class LunarDateTimeRepository implements TimestampAccessable, JulianAccessable
     protected $leapMonth = null;
 
     /**
-     * Timestamp tương ứng với tháng nhuận âm lịch
+     * Timestamp tương ứng với điểm sóc của tháng nhuận âm lịch
      * @var mixed
      */
     protected $leapMonthTimestamp = null;
